@@ -1,0 +1,24 @@
+{
+  "name": "vocab-flashcard-worker",
+  "version": "1.0.0",
+  "description": "極簡美式單字即時發音與艾賓浩斯複習庫 (Cloudflare Worker)",
+  "main": "worker.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "vocabulary",
+    "flashcards",
+    "spaced-repetition",
+    "traditional-chinese",
+    "ebbinghaus"
+  ],
+  "author": "marker1111014",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

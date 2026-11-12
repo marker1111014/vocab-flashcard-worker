@@ -1,0 +1,12 @@
+name = "vocab-flashcard-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# 若需要啟用個人專屬雲端同步，請在 Cloudflare 建立 KV Namespace 並在此綁定：
+# [[kv_namespaces]]
+# binding = "VOCAB_KV"
+# id = "<YOUR_KV_NAMESPACE_ID>"
+
+# 個人同步專屬密鑰（邊緣直接攔截未授權請求，0 額度消耗）：
+# [vars]
+# SYNC_SECRET = "your-custom-secret-password"
