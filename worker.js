@@ -34,8 +34,12 @@ export default {
     // 1. 同源音訊串流代理 (/api/audio?word=...)
     // -------------------------------------------------------------
     if (url.pathname === "/api/audio") {
-      const rawWord = url.searchParams.get("word")?.trim().toLowerCase();
-      if (!rawWord) return new Response("Missing word", { status: 400 });
+      const rawParam = (url.searchParams.get("word") || "").replace(/<[^>]+>/g, "").trim();
+      if (!rawParam) return new Response("Missing word", { status: 400 });
+
+      const audioType = url.searchParams.get("type") || "";
+      const isSentence = audioType === "sentence" || rawParam.includes(" ") || rawParam.length > 35;
+      const rawWord = rawParam.toLowerCase();
 
       const cache = typeof caches !== "undefined" ? caches.default : null;
       const cacheKey = new Request(url.toString(), request);
@@ -49,49 +53,57 @@ export default {
 
       let audioStreamResponse = null;
 
-      // 步驟 A：優先抓取 Dictionary API 美式真人錄音檔
-      try {
-        const dictRes = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(rawWord), {
-          headers: { "User-Agent": "Mozilla/5.0" }
-        });
-
-        if (dictRes.ok) {
-          const data = await dictRes.json();
-          const phonetics = data[0]?.phonetics || [];
-          
-          const usPhonetic = phonetics.find(p => {
-            if (!p.audio) return false;
-            const a = p.audio.toLowerCase();
-            return a.includes("-us.") || a.includes("_us_") || a.includes("/en-us");
+      // 步驟 A：單字優先抓取 Dictionary API 美式真人錄音檔（例句/片語跳過此步以降低延遲）
+      if (!isSentence) {
+        try {
+          const dictRes = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(rawWord), {
+            headers: { "User-Agent": "Mozilla/5.0" }
           });
 
-          let targetAudioUrl = usPhonetic?.audio || phonetics.find(p => p.audio && p.audio.length > 0)?.audio;
-
-          if (targetAudioUrl) {
-            if (targetAudioUrl.startsWith("//")) targetAudioUrl = "https:" + targetAudioUrl;
+          if (dictRes.ok) {
+            const data = await dictRes.json();
+            const phonetics = data[0]?.phonetics || [];
             
-            const fileRes = await fetch(targetAudioUrl, {
-              headers: { "User-Agent": "Mozilla/5.0" }
+            const usPhonetic = phonetics.find(p => {
+              if (!p.audio) return false;
+              const a = p.audio.toLowerCase();
+              return a.includes("-us.") || a.includes("_us_") || a.includes("/en-us");
             });
 
-            if (fileRes.ok && fileRes.headers.get("content-type")?.includes("audio")) {
-              audioStreamResponse = new Response(fileRes.body, {
-                status: 200,
-                headers: {
-                  "Content-Type": "audio/mpeg",
-                  "Cache-Control": "public, max-age=604800, s-maxage=604800",
-                  "Access-Control-Allow-Origin": "*"
-                }
+            let targetAudioUrl = usPhonetic?.audio || phonetics.find(p => p.audio && p.audio.length > 0)?.audio;
+
+            if (targetAudioUrl) {
+              if (targetAudioUrl.startsWith("//")) targetAudioUrl = "https:" + targetAudioUrl;
+              
+              const fileRes = await fetch(targetAudioUrl, {
+                headers: { "User-Agent": "Mozilla/5.0" }
               });
+
+              if (fileRes.ok && fileRes.headers.get("content-type")?.includes("audio")) {
+                audioStreamResponse = new Response(fileRes.body, {
+                  status: 200,
+                  headers: {
+                    "Content-Type": "audio/mpeg",
+                    "Cache-Control": "public, max-age=604800, s-maxage=604800",
+                    "Access-Control-Allow-Origin": "*"
+                  }
+                });
+              }
             }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
-      // 步驟 B：備援機制 (Google TTS)
+      // 步驟 B：備援 / 例句串流 (Google TTS)
       if (!audioStreamResponse) {
         try {
-          const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=" + encodeURIComponent(rawWord);
+          let ttsText = isSentence ? rawParam : rawWord;
+          if (ttsText.length > 190) {
+            ttsText = ttsText.slice(0, 190);
+            const lastSpace = ttsText.lastIndexOf(" ");
+            if (lastSpace > 120) ttsText = ttsText.slice(0, lastSpace);
+          }
+          const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=" + encodeURIComponent(ttsText);
           const ttsRes = await fetch(ttsUrl, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -243,7 +255,7 @@ export default {
           const cached = await cache.match(cacheKey);
           if (cached) {
             const cachedData = await cached.clone().json();
-            if (cachedData.translation) {
+            if (cachedData.translation && Array.isArray(cachedData.examples)) {
               return cached;
             }
           }
@@ -294,6 +306,82 @@ export default {
         return items;
       };
 
+      const extractExamples = (data) => {
+        const candidates = [];
+
+        const cleanMarked = (s) => {
+          if (!s || typeof s !== "string") return "";
+          return s
+            .replace(/<b\b[^>]*>/gi, "__B_OPEN__")
+            .replace(/<\/b>/gi, "__B_CLOSE__")
+            .replace(/<[^>]+>/g, "")
+            .replace(/__B_OPEN__/g, "<b>")
+            .replace(/__B_CLOSE__/g, "</b>")
+            .replace(/\s+/g, " ")
+            .trim();
+        };
+
+        const stripTags = (s) => (s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+        const addCandidate = (enRaw, zhRaw, tierBase) => {
+          const enMarked = cleanMarked(enRaw);
+          const en = stripTags(enMarked);
+          const zh = toTraditional(stripTags(zhRaw));
+          if (!en || !zh) return;
+          if (/[\u4e00-\u9fff]/.test(en)) return;
+          if (en.startsWith("...") || en.startsWith("…")) return;
+          if (en.length < 12 || en.length > 220) return;
+
+          const tier = en.length <= 155 ? tierBase : tierBase + 3;
+          candidates.push({ en, enMarked, zh, tier });
+        };
+
+        // 來源 1：expand_ec（權威精選、牛津、柯林斯、歷年考題）
+        for (const wo of (data?.expand_ec?.word || [])) {
+          for (const t of (wo?.transList || [])) {
+            for (const s of (t?.content?.sents || [])) {
+              const isAuth = s?.sourceType === "权威" || s?.sourceType === "權威" ||
+                (s?.source && (s.source.includes("牛津") || s.source.includes("柯林斯") || s.source.includes("精选")));
+              addCandidate(s?.sentOrig, s?.sentTrans, isAuth ? 1 : 4);
+            }
+          }
+        }
+
+        // 來源 2：blng_sents_part（雙語例句，支援單字與片語/慣用語）
+        for (const p of (data?.blng_sents_part?.["sentence-pair"] || [])) {
+          const hasNamedSource = Boolean(p?.source && (p.source.includes("牛津") || p.source.includes("柯林斯") || p.source.includes("朗文")));
+          addCandidate(p?.["sentence-eng"] || p?.sentence, p?.["sentence-translation"], hasNamedSource ? 2 : 3);
+        }
+
+        // 來源 3：collins 例句（次要補位）
+        for (const ce of (data?.collins?.collins_entries || [])) {
+          for (const e of (ce?.entries?.entry || [])) {
+            for (const te of (e?.tran_entry || [])) {
+              for (const s of (te?.exam_sents?.sent || [])) {
+                addCandidate(s?.eng_sent, s?.chn_sent, 5);
+              }
+            }
+          }
+        }
+
+        candidates.sort((a, b) => a.tier - b.tier);
+
+        const seen = new Set();
+        const picked = [];
+        for (const c of candidates) {
+          const key = c.en.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          picked.push({
+            en: c.en,
+            enMarked: c.enMarked,
+            zh: c.zh
+          });
+          if (picked.length >= 4) break;
+        }
+        return picked;
+      };
+
       const fetchLexicon = async (word) => {
         try {
           const res = await fetch("https://dict.youdao.com/jsonapi?q=" + encodeURIComponent(word), {
@@ -301,15 +389,20 @@ export default {
           });
           if (!res.ok) return null;
           const data = await res.json();
+          const examples = extractExamples(data);
           const wordObj = data?.ec?.word?.[0];
-          if (!wordObj || !Array.isArray(wordObj.trs) || wordObj.trs.length === 0) return null;
+          if (!wordObj || !Array.isArray(wordObj.trs) || wordObj.trs.length === 0) {
+            return examples.length > 0 ? { translation: "", definitions: [], examples } : null;
+          }
 
           const rawLines = [];
           for (const tr of wordObj.trs) {
             const item = tr?.tr?.[0]?.l?.i?.[0];
             if (item) rawLines.push(item);
           }
-          if (rawLines.length === 0) return null;
+          if (rawLines.length === 0) {
+            return examples.length > 0 ? { translation: "", definitions: [], examples } : null;
+          }
 
           const lines = rawLines.map(l => toTraditional(l).trim()).filter(Boolean);
 
@@ -339,12 +432,15 @@ export default {
             }
           }
 
-          if (defs.length === 0) return null;
+          if (defs.length === 0) {
+            return examples.length > 0 ? { translation: "", definitions: [], examples } : null;
+          }
           const primaryTrans = toTraditional(defs[0]?.meanings.slice(0, 2).join("、") || defs[0]?.meanings[0] || "");
 
           return {
             translation: primaryTrans,
-            definitions: defs
+            definitions: defs,
+            examples
           };
         } catch (e) {
           return null;
@@ -372,12 +468,18 @@ export default {
 
       let translation = "";
       let definitions = [];
+      let examples = [];
 
       try {
         const lex = await fetchLexicon(rawWord);
-        if (lex && lex.translation && lex.definitions.length > 0) {
-          translation = lex.translation;
-          definitions = lex.definitions;
+        if (lex) {
+          if (lex.translation && lex.definitions.length > 0) {
+            translation = lex.translation;
+            definitions = lex.definitions;
+          }
+          if (Array.isArray(lex.examples)) {
+            examples = lex.examples;
+          }
         }
       } catch (e) {}
 
@@ -427,6 +529,7 @@ export default {
           posEn: d.posEn || "",
           meanings: (d.meanings || []).map(m => toTraditional(m))
         })),
+        examples: examples,
         audioUrl: "/api/audio?word=" + encodeURIComponent(rawWord)
       };
 
@@ -723,6 +826,100 @@ export default {
     .status { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
     .status.notice { color: var(--accent); }
     .status.error { color: #f87171; }
+
+    /* 左側：精選雙語例句區塊 (風格 1：預設 2 句，僅左側顯示) */
+    .examples-section {
+      width: 100%;
+      border-top: 1px dashed var(--border);
+      margin-top: 14px;
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      text-align: left;
+      gap: 8px;
+    }
+    .examples-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+    .example-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      width: 100%;
+    }
+    .example-card {
+      background: rgba(30, 41, 59, 0.55);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .example-en-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .example-en {
+      font-size: 0.86rem;
+      line-height: 1.48;
+      color: var(--text);
+      flex: 1;
+      word-break: break-word;
+    }
+    .ex-highlight {
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.14);
+      padding: 0 3px;
+      font-weight: 600;
+    }
+    .example-zh {
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--text-muted);
+    }
+    .example-play-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+      line-height: 1.3;
+      transition: all 0.2s;
+    }
+    .example-play-btn:hover,
+    .example-play-btn.playing {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .example-more-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-muted);
+      font-size: 0.74rem;
+      padding: 5px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .example-more-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.06);
+    }
 
     /* 右側：複習面板 (無音標) */
     .review-box {
@@ -1044,6 +1241,15 @@ export default {
           </div>
 
           <button id="playBtn" class="btn">🔊 重新播放</button>
+
+          <!-- 精選雙語例句區（僅左側顯示，預設 2 句） -->
+          <div id="examplesSection" class="examples-section" style="display:none;">
+            <div class="examples-header">
+              <span>精選例句</span>
+            </div>
+            <div id="exampleList" class="example-list"></div>
+            <button id="exampleMoreBtn" class="example-more-btn" style="display:none;"></button>
+          </div>
         </div>
       </div>
 
@@ -1293,6 +1499,9 @@ export default {
     const mainTrans = document.getElementById('mainTrans');
     const defList = document.getElementById('defList');
     const playBtn = document.getElementById('playBtn');
+    const examplesSection = document.getElementById('examplesSection');
+    const exampleList = document.getElementById('exampleList');
+    const exampleMoreBtn = document.getElementById('exampleMoreBtn');
 
     // 複習面板 DOM
     const reviewPanel = document.getElementById('reviewPanel');
@@ -1462,6 +1671,147 @@ export default {
 
     starBtn.addEventListener('click', toggleBookmarkCurrent);
 
+    let examplesExpanded = false;
+    let currentExamples = [];
+
+    function resetExamplesUI() {
+      examplesExpanded = false;
+      currentExamples = [];
+      examplesSection.style.display = 'none';
+      exampleList.innerHTML = '';
+      exampleMoreBtn.style.display = 'none';
+    }
+
+    function appendMarkedSentence(container, enMarked, enPlain, targetWord) {
+      if (enMarked && enMarked.indexOf('<b>') !== -1) {
+        const chunks = enMarked.split('<b>');
+        chunks.forEach((chunk, idx) => {
+          if (!chunk) return;
+          if (idx === 0) {
+            container.appendChild(document.createTextNode(chunk));
+            return;
+          }
+          const closeIdx = chunk.indexOf('</b>');
+          if (closeIdx !== -1) {
+            const hlText = chunk.slice(0, closeIdx);
+            const restText = chunk.slice(closeIdx + 4);
+            if (hlText) {
+              const span = document.createElement('span');
+              span.className = 'ex-highlight';
+              span.innerText = hlText;
+              container.appendChild(span);
+            }
+            if (restText) container.appendChild(document.createTextNode(restText));
+          } else {
+            container.appendChild(document.createTextNode(chunk));
+          }
+        });
+        return;
+      }
+
+      const plain = enPlain || '';
+      const cleanTarget = (targetWord || '').trim().toLowerCase();
+      if (cleanTarget) {
+        const lowerPlain = plain.toLowerCase();
+        const tLen = cleanTarget.length;
+        const isWordChar = ch => (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9');
+        let cursor = 0;
+        let searchFrom = 0;
+        let idx = lowerPlain.indexOf(cleanTarget, searchFrom);
+        while (idx !== -1) {
+          const beforeOk = idx === 0 || !isWordChar(lowerPlain[idx - 1]);
+          if (beforeOk) {
+            let end = idx + tLen;
+            while (end < plain.length && lowerPlain[end] >= 'a' && lowerPlain[end] <= 'z') end++;
+            if (idx > cursor) container.appendChild(document.createTextNode(plain.slice(cursor, idx)));
+            const span = document.createElement('span');
+            span.className = 'ex-highlight';
+            span.innerText = plain.slice(idx, end);
+            container.appendChild(span);
+            cursor = end;
+            searchFrom = end;
+          } else {
+            searchFrom = idx + 1;
+          }
+          idx = lowerPlain.indexOf(cleanTarget, searchFrom);
+        }
+        if (cursor < plain.length) container.appendChild(document.createTextNode(plain.slice(cursor)));
+        return;
+      }
+      container.appendChild(document.createTextNode(plain));
+    }
+
+    function renderExamples(examples, targetWord) {
+      examplesExpanded = false;
+      currentExamples = Array.isArray(examples) ? examples : [];
+      exampleList.innerHTML = '';
+
+      if (currentExamples.length === 0) {
+        examplesSection.style.display = 'none';
+        exampleMoreBtn.style.display = 'none';
+        return;
+      }
+
+      currentExamples.forEach((ex, idx) => {
+        const card = document.createElement('div');
+        card.className = 'example-card';
+        if (idx >= 2) {
+          card.style.display = 'none';
+          card.setAttribute('data-extra', '1');
+        }
+
+        const enRow = document.createElement('div');
+        enRow.className = 'example-en-row';
+
+        const enEl = document.createElement('div');
+        enEl.className = 'example-en';
+        appendMarkedSentence(enEl, ex.enMarked, ex.en, targetWord);
+
+        const exPlayBtn = document.createElement('button');
+        exPlayBtn.className = 'example-play-btn';
+        exPlayBtn.title = '朗讀此例句';
+        exPlayBtn.innerText = '🔊';
+        exPlayBtn.addEventListener('click', () => {
+          document.querySelectorAll('.example-play-btn.playing').forEach(b => b.classList.remove('playing'));
+          exPlayBtn.classList.add('playing');
+          playAudio('/api/audio?type=sentence&word=' + encodeURIComponent(ex.en), () => {
+            exPlayBtn.classList.remove('playing');
+          });
+        });
+
+        enRow.appendChild(enEl);
+        enRow.appendChild(exPlayBtn);
+
+        const zhEl = document.createElement('div');
+        zhEl.className = 'example-zh';
+        zhEl.innerText = toTraditionalClient(ex.zh || '');
+
+        card.appendChild(enRow);
+        card.appendChild(zhEl);
+        exampleList.appendChild(card);
+      });
+
+      if (currentExamples.length > 2) {
+        exampleMoreBtn.innerText = '▾ 展開更多例句 (共 ' + currentExamples.length + ' 句)';
+        exampleMoreBtn.style.display = 'block';
+      } else {
+        exampleMoreBtn.style.display = 'none';
+      }
+
+      examplesSection.style.display = 'flex';
+    }
+
+    exampleMoreBtn.addEventListener('click', () => {
+      examplesExpanded = !examplesExpanded;
+      const extras = exampleList.querySelectorAll('[data-extra="1"]');
+      extras.forEach(el => {
+        el.style.display = examplesExpanded ? 'flex' : 'none';
+      });
+      exampleMoreBtn.innerText = examplesExpanded
+        ? '▴ 收合多餘例句'
+        : ('▾ 展開更多例句 (共 ' + currentExamples.length + ' 句)');
+    });
+
     function clearInputField() {
       input.value = '';
       input.focus();
@@ -1469,6 +1819,7 @@ export default {
       wordHeader.style.display = 'none';
       transSection.style.display = 'none';
       playBtn.style.display = 'none';
+      resetExamplesUI();
 
       status.style.display = 'block';
       status.className = 'status notice';
@@ -1517,6 +1868,7 @@ export default {
       wordHeader.style.display = "none";
       transSection.style.display = "none";
       playBtn.style.display = "none";
+      resetExamplesUI();
 
       try {
         const res = await fetch("/api/pronounce?word=" + encodeURIComponent(word));
@@ -1566,6 +1918,7 @@ export default {
 
         status.style.display = "none";
         playBtn.style.display = "inline-block";
+        renderExamples(data.examples, data.word || word);
 
         playAudio(data.audioUrl || ("/api/audio?word=" + encodeURIComponent(data.word || word)));
 
@@ -1582,10 +1935,19 @@ export default {
       }
     });
 
-    function playAudio(url) {
+    function playAudio(url, onEnded) {
       if (!url) return;
+      document.querySelectorAll('.example-play-btn.playing').forEach(b => b.classList.remove('playing'));
+      audioPlayer.onended = null;
+      audioPlayer.onerror = null;
+      if (typeof onEnded === 'function') {
+        audioPlayer.onended = onEnded;
+        audioPlayer.onerror = onEnded;
+      }
       audioPlayer.src = url;
-      audioPlayer.play().catch(e => {});
+      audioPlayer.play().catch(e => {
+        if (typeof onEnded === 'function') onEnded();
+      });
     }
 
     // ==========================================
