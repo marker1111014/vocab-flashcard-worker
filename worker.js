@@ -741,7 +741,7 @@ export default {
       background: var(--gold-bg);
     }
 
-    /* 詞性與解釋置中樣式 */
+    /* 詞性與解釋置中樣式 (支援點擊自選主要釋義) */
     .trans-section {
       width: 100%;
       border-top: 1px dashed var(--border);
@@ -753,13 +753,75 @@ export default {
       justify-content: center;
       text-align: center;
     }
+    .main-trans-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
     .main-trans {
       font-size: 1.25rem;
       font-weight: bold;
       color: var(--accent);
-      margin-bottom: 10px;
+      text-align: center;
+      line-height: 1.35;
+    }
+    .trans-action-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      line-height: 1.2;
+      transition: all 0.2s;
+    }
+    .trans-action-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .edit-trans-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 8px;
+    }
+    .edit-trans-input {
+      flex: 1;
+      padding: 4px 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      font-size: 0.92rem;
+      font-weight: 600;
+      outline: none;
       text-align: center;
     }
+    .edit-trans-btn {
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .edit-trans-btn.save {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .edit-trans-btn.save:hover { background: var(--accent-hover); }
+    .edit-trans-btn.cancel {
+      background: var(--card-bg);
+      color: var(--text-muted);
+    }
+    .edit-trans-btn.cancel:hover { color: var(--text); }
     .def-list {
       display: flex;
       flex-direction: column;
@@ -787,6 +849,18 @@ export default {
       font-weight: 600;
       white-space: nowrap;
       flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .pos-tag:hover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.22);
+    }
+    .pos-tag.active {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.35);
+      font-weight: 700;
     }
     .meaning-wrap {
       display: flex;
@@ -802,12 +876,22 @@ export default {
       color: #cbd5e1;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
-      padding: 2px 6px;
+      padding: 2px 7px;
       line-height: 1.35;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
     }
     .meaning-pill:hover {
       border-color: var(--accent);
-      color: var(--text);
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .meaning-pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.24);
+      font-weight: 600;
     }
 
     .btn {
@@ -1236,7 +1320,16 @@ export default {
           
           <!-- 詞性與解釋置中區域 -->
           <div id="transSection" class="trans-section" style="display:none;">
-            <div id="mainTrans" class="main-trans"></div>
+            <div id="mainTransRow" class="main-trans-row">
+              <span id="mainTrans" class="main-trans"></span>
+              <button id="editTransBtn" class="trans-action-btn" title="自訂主要釋義">✏️</button>
+              <button id="resetTransBtn" class="trans-action-btn" title="恢復辭典預設釋義" style="display:none;">↺</button>
+            </div>
+            <div id="editTransBox" class="edit-trans-box" style="display:none;">
+              <input type="text" id="editTransInput" class="edit-trans-input" placeholder="輸入自訂主要釋義...">
+              <button id="saveTransBtn" class="edit-trans-btn save">✓</button>
+              <button id="cancelTransBtn" class="edit-trans-btn cancel">✕</button>
+            </div>
             <div id="defList" class="def-list"></div>
           </div>
 
@@ -1295,7 +1388,15 @@ export default {
 
             <!-- 卡片背面 (點擊翻面後呈現，釋義置中) -->
             <div id="cardBack" class="card-back">
-              <div id="reviewMainTrans" class="card-trans">翻譯</div>
+              <div id="reviewMainTransRow" class="main-trans-row">
+                <span id="reviewMainTrans" class="card-trans">翻譯</span>
+                <button id="reviewEditTransBtn" class="trans-action-btn" title="自訂此卡片主要釋義">✏️</button>
+              </div>
+              <div id="reviewEditTransBox" class="edit-trans-box" style="display:none;">
+                <input type="text" id="reviewEditTransInput" class="edit-trans-input" placeholder="輸入自訂釋義...">
+                <button id="reviewSaveTransBtn" class="edit-trans-btn save">✓</button>
+                <button id="reviewCancelTransBtn" class="edit-trans-btn cancel">✕</button>
+              </div>
               <div id="reviewDefList" class="card-defs def-list"></div>
 
               <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; text-align:center;">請評估熟悉度：</div>
@@ -1433,6 +1534,47 @@ export default {
     const SYNC_KEY_STORAGE = 'deck_sync_key_v1';
     const LAST_SYNC_STORAGE = 'deck_last_sync_v1';
     const HINT_STORAGE_KEY = 'deck_hide_keyboard_hint_v1';
+    const CUSTOM_TRANS_STORAGE = 'deck_custom_trans_v1';
+
+    function loadCustomTranslations() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_TRANS_STORAGE);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveCustomTranslations(map) {
+      try {
+        localStorage.setItem(CUSTOM_TRANS_STORAGE, JSON.stringify(map));
+      } catch (e) {}
+    }
+
+    function getCustomTranslation(word) {
+      if (!word) return null;
+      const map = loadCustomTranslations();
+      return map[word.trim().toLowerCase()] || null;
+    }
+
+    function setCustomTranslation(word, trans) {
+      if (!word) return;
+      const key = word.trim().toLowerCase();
+      const map = loadCustomTranslations();
+      if (trans && trans.trim()) {
+        map[key] = trans.trim();
+      } else {
+        delete map[key];
+      }
+      saveCustomTranslations(map);
+    }
+
+    function formatChosenMeaning(meaning, pos) {
+      const cleanM = (meaning || '').trim();
+      const cleanPos = (pos || '').trim();
+      if (!cleanPos || cleanPos === '釋義') return cleanM;
+      return cleanM + ' (' + cleanPos + ')';
+    }
 
     let deck = loadDeck();
     let currentCard = null;
@@ -1496,7 +1638,14 @@ export default {
     const wordDisplay = document.getElementById('wordDisplay');
     const starBtn = document.getElementById('starBtn');
     const transSection = document.getElementById('transSection');
+    const mainTransRow = document.getElementById('mainTransRow');
     const mainTrans = document.getElementById('mainTrans');
+    const editTransBtn = document.getElementById('editTransBtn');
+    const resetTransBtn = document.getElementById('resetTransBtn');
+    const editTransBox = document.getElementById('editTransBox');
+    const editTransInput = document.getElementById('editTransInput');
+    const saveTransBtn = document.getElementById('saveTransBtn');
+    const cancelTransBtn = document.getElementById('cancelTransBtn');
     const defList = document.getElementById('defList');
     const playBtn = document.getElementById('playBtn');
     const examplesSection = document.getElementById('examplesSection');
@@ -1518,7 +1667,13 @@ export default {
     const reviewPlayBtn = document.getElementById('reviewPlayBtn');
     const flipBtn = document.getElementById('flipBtn');
     const cardBack = document.getElementById('cardBack');
+    const reviewMainTransRow = document.getElementById('reviewMainTransRow');
     const reviewMainTrans = document.getElementById('reviewMainTrans');
+    const reviewEditTransBtn = document.getElementById('reviewEditTransBtn');
+    const reviewEditTransBox = document.getElementById('reviewEditTransBox');
+    const reviewEditTransInput = document.getElementById('reviewEditTransInput');
+    const reviewSaveTransBtn = document.getElementById('reviewSaveTransBtn');
+    const reviewCancelTransBtn = document.getElementById('reviewCancelTransBtn');
     const reviewDefList = document.getElementById('reviewDefList');
     const rateHardBtn = document.getElementById('rateHardBtn');
     const rateMedBtn = document.getElementById('rateMedBtn');
@@ -1648,9 +1803,10 @@ export default {
           loadNextReviewCard();
         }
       } else {
+        const chosenTrans = (mainTrans.innerText || '').trim() || currentSearchData.translation || '';
         const newCard = {
           word: currentSearchData.word,
-          translation: currentSearchData.translation || '',
+          translation: chosenTrans,
           definitions: currentSearchData.definitions || [],
           audioUrl: currentSearchData.audioUrl || '',
           level: 1,
@@ -1670,6 +1826,167 @@ export default {
     }
 
     starBtn.addEventListener('click', toggleBookmarkCurrent);
+
+    function updateDefPillsHighlight(currentTransText, targetContainer) {
+      const clean = (currentTransText || '').trim();
+      const container = targetContainer || defList;
+      if (!container) return;
+      const rows = container.querySelectorAll('.def-row');
+      rows.forEach(row => {
+        const posTag = row.querySelector('.pos-tag');
+        const posText = posTag ? posTag.innerText.trim() : '';
+        const pills = row.querySelectorAll('.meaning-pill');
+
+        let anyPillActive = false;
+        pills.forEach(pill => {
+          const mText = pill.innerText.trim();
+          const isActive = Boolean(clean && mText && clean.includes(mText));
+          if (isActive) {
+            pill.classList.add('active');
+            anyPillActive = true;
+          } else {
+            pill.classList.remove('active');
+          }
+        });
+
+        if (posTag) {
+          if (clean && posText && clean.includes('(' + posText + ')') && anyPillActive) {
+            posTag.classList.add('active');
+          } else {
+            posTag.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    function applyChosenTranslation(newTrans) {
+      if (!currentSearchData) return;
+      const word = currentSearchData.word;
+      const cleanTrans = toTraditionalClient((newTrans || '').trim());
+      if (!cleanTrans) return;
+
+      setCustomTranslation(word, cleanTrans);
+      mainTrans.innerText = cleanTrans;
+      currentSearchData.customTranslation = cleanTrans;
+
+      const defTrans = toTraditionalClient(currentSearchData.translation || '');
+      if (cleanTrans !== defTrans) {
+        resetTransBtn.style.display = 'inline-block';
+      } else {
+        resetTransBtn.style.display = 'none';
+      }
+
+      updateDefPillsHighlight(cleanTrans, defList);
+
+      const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+      if (deckIdx >= 0) {
+        deck[deckIdx].translation = cleanTrans;
+        saveDeck();
+        if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
+          currentCard.translation = cleanTrans;
+          reviewMainTrans.innerText = cleanTrans;
+          updateDefPillsHighlight(cleanTrans, reviewDefList);
+        }
+      }
+    }
+
+    function resetChosenTranslation() {
+      if (!currentSearchData) return;
+      const word = currentSearchData.word;
+      setCustomTranslation(word, null);
+      const defTrans = toTraditionalClient(currentSearchData.translation || '釋義');
+      mainTrans.innerText = defTrans;
+      delete currentSearchData.customTranslation;
+      resetTransBtn.style.display = 'none';
+      updateDefPillsHighlight(defTrans, defList);
+
+      const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+      if (deckIdx >= 0) {
+        deck[deckIdx].translation = defTrans;
+        saveDeck();
+        if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
+          currentCard.translation = defTrans;
+          reviewMainTrans.innerText = defTrans;
+          updateDefPillsHighlight(defTrans, reviewDefList);
+        }
+      }
+    }
+
+    function closeInlineEdit() {
+      if (editTransBox) editTransBox.style.display = 'none';
+      if (mainTransRow) mainTransRow.style.display = 'flex';
+    }
+
+    function saveInlineEdit() {
+      const val = editTransInput.value.trim();
+      if (val) {
+        applyChosenTranslation(val);
+      }
+      closeInlineEdit();
+    }
+
+    editTransBtn.addEventListener('click', () => {
+      mainTransRow.style.display = 'none';
+      editTransBox.style.display = 'flex';
+      editTransInput.value = mainTrans.innerText.trim();
+      editTransInput.focus();
+      editTransInput.select();
+    });
+
+    saveTransBtn.addEventListener('click', saveInlineEdit);
+    cancelTransBtn.addEventListener('click', closeInlineEdit);
+    editTransInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveInlineEdit();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeInlineEdit();
+      }
+    });
+    resetTransBtn.addEventListener('click', resetChosenTranslation);
+
+    function closeReviewInlineEdit() {
+      if (reviewEditTransBox) reviewEditTransBox.style.display = 'none';
+      if (reviewMainTransRow) reviewMainTransRow.style.display = 'flex';
+    }
+
+    reviewEditTransBtn.addEventListener('click', () => {
+      reviewMainTransRow.style.display = 'none';
+      reviewEditTransBox.style.display = 'flex';
+      reviewEditTransInput.value = (currentCard && currentCard.translation) ? currentCard.translation : reviewMainTrans.innerText.trim();
+      reviewEditTransInput.focus();
+      reviewEditTransInput.select();
+    });
+
+    reviewSaveTransBtn.addEventListener('click', () => {
+      const val = reviewEditTransInput.value.trim();
+      if (val && currentCard) {
+        const cleanT = toTraditionalClient(val);
+        currentCard.translation = cleanT;
+        setCustomTranslation(currentCard.word, cleanT);
+        saveDeck();
+        reviewMainTrans.innerText = cleanT;
+        updateDefPillsHighlight(cleanT, reviewDefList);
+        if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
+          mainTrans.innerText = cleanT;
+          resetTransBtn.style.display = 'inline-block';
+          updateDefPillsHighlight(cleanT, defList);
+        }
+      }
+      closeReviewInlineEdit();
+    });
+
+    reviewCancelTransBtn.addEventListener('click', closeReviewInlineEdit);
+    reviewEditTransInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        reviewSaveTransBtn.click();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeReviewInlineEdit();
+      }
+    });
 
     let examplesExpanded = false;
     let currentExamples = [];
@@ -1820,6 +2137,8 @@ export default {
       transSection.style.display = 'none';
       playBtn.style.display = 'none';
       resetExamplesUI();
+      closeInlineEdit();
+      resetTransBtn.style.display = 'none';
 
       status.style.display = 'block';
       status.className = 'status notice';
@@ -1869,6 +2188,7 @@ export default {
       transSection.style.display = "none";
       playBtn.style.display = "none";
       resetExamplesUI();
+      closeInlineEdit();
 
       try {
         const res = await fetch("/api/pronounce?word=" + encodeURIComponent(word));
@@ -1886,7 +2206,15 @@ export default {
         wordHeader.style.display = "flex";
 
         if (data.translation || (data.definitions && data.definitions.length > 0)) {
-          mainTrans.innerText = toTraditionalClient(data.translation || "釋義");
+          const custom = getCustomTranslation(data.word || word);
+          const chosen = custom || toTraditionalClient(data.translation || "釋義");
+          mainTrans.innerText = chosen;
+          if (custom && custom !== toTraditionalClient(data.translation || "")) {
+            resetTransBtn.style.display = "inline-block";
+          } else {
+            resetTransBtn.style.display = "none";
+          }
+
           defList.innerHTML = "";
           
           if (Array.isArray(data.definitions)) {
@@ -1896,7 +2224,15 @@ export default {
               
               const posSpan = document.createElement("span");
               posSpan.className = "pos-tag";
-              posSpan.innerText = toTraditionalClient(d.pos);
+              const posText = toTraditionalClient(d.pos);
+              posSpan.innerText = posText;
+              posSpan.title = "點擊設為此詞性主要釋義";
+              posSpan.addEventListener("click", () => {
+                const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join("、");
+                if (combined) {
+                  applyChosenTranslation(formatChosenMeaning(combined, posText));
+                }
+              });
               row.appendChild(posSpan);
 
               const wrap = document.createElement("div");
@@ -1904,13 +2240,36 @@ export default {
               (d.meanings || []).forEach(m => {
                 const pill = document.createElement("span");
                 pill.className = "meaning-pill";
-                pill.innerText = toTraditionalClient(m);
+                const mText = toTraditionalClient(m);
+                pill.innerText = mText;
+                pill.title = "點擊設為主要釋義：" + formatChosenMeaning(mText, posText);
+                pill.addEventListener("click", (e) => {
+                  if (e.ctrlKey || e.shiftKey) {
+                    const cur = mainTrans.innerText.trim();
+                    if (posText && cur.includes("(" + posText + ")")) {
+                      const base = cur.replace("(" + posText + ")", "").trim();
+                      const parts = base.split("、").map(p => p.trim()).filter(Boolean);
+                      let newParts = [];
+                      if (parts.includes(mText)) {
+                        newParts = parts.filter(p => p !== mText);
+                      } else {
+                        newParts = parts.concat([mText]);
+                      }
+                      if (newParts.length > 0) {
+                        applyChosenTranslation(formatChosenMeaning(newParts.join("、"), posText));
+                        return;
+                      }
+                    }
+                  }
+                  applyChosenTranslation(formatChosenMeaning(mText, posText));
+                });
                 wrap.appendChild(pill);
               });
               row.appendChild(wrap);
               defList.appendChild(row);
             });
           }
+          updateDefPillsHighlight(chosen, defList);
           transSection.style.display = "flex";
         } else {
           transSection.style.display = "none";
@@ -2023,10 +2382,13 @@ export default {
       else cardLevelTag.innerText = '🟢 精通';
 
       if (!isFlipped) {
+        closeReviewInlineEdit();
         cardBack.classList.remove('show');
         document.getElementById('flipBtnWrap').style.display = 'block';
       } else {
-        reviewMainTrans.innerText = toTraditionalClient(currentCard.translation || '無翻譯');
+        closeReviewInlineEdit();
+        const curTrans = toTraditionalClient(currentCard.translation || '無翻譯');
+        reviewMainTrans.innerText = curTrans;
         reviewDefList.innerHTML = '';
         if (Array.isArray(currentCard.definitions)) {
           currentCard.definitions.forEach(d => {
@@ -2034,7 +2396,25 @@ export default {
             row.className = 'def-row';
             const pos = document.createElement('span');
             pos.className = 'pos-tag';
-            pos.innerText = toTraditionalClient(d.pos);
+            const posText = toTraditionalClient(d.pos);
+            pos.innerText = posText;
+            pos.title = '點擊設為此卡片主要釋義';
+            pos.addEventListener('click', () => {
+              const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join('、');
+              if (combined) {
+                const newT = formatChosenMeaning(combined, posText);
+                currentCard.translation = newT;
+                setCustomTranslation(currentCard.word, newT);
+                saveDeck();
+                reviewMainTrans.innerText = newT;
+                updateDefPillsHighlight(newT, reviewDefList);
+                if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
+                  mainTrans.innerText = newT;
+                  resetTransBtn.style.display = 'inline-block';
+                  updateDefPillsHighlight(newT, defList);
+                }
+              }
+            });
             row.appendChild(pos);
 
             const wrap = document.createElement('div');
@@ -2042,12 +2422,28 @@ export default {
             (d.meanings || []).forEach(m => {
               const pill = document.createElement('span');
               pill.className = 'meaning-pill';
-              pill.innerText = toTraditionalClient(m);
+              const mText = toTraditionalClient(m);
+              pill.innerText = mText;
+              pill.title = '點擊設為卡片釋義：' + formatChosenMeaning(mText, posText);
+              pill.addEventListener('click', () => {
+                const newT = formatChosenMeaning(mText, posText);
+                currentCard.translation = newT;
+                setCustomTranslation(currentCard.word, newT);
+                saveDeck();
+                reviewMainTrans.innerText = newT;
+                updateDefPillsHighlight(newT, reviewDefList);
+                if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
+                  mainTrans.innerText = newT;
+                  resetTransBtn.style.display = 'inline-block';
+                  updateDefPillsHighlight(newT, defList);
+                }
+              });
               wrap.appendChild(pill);
             });
             row.appendChild(wrap);
             reviewDefList.appendChild(row);
           });
+          updateDefPillsHighlight(curTrans, reviewDefList);
           reviewDefList.style.display = 'flex';
         } else {
           reviewDefList.style.display = 'none';
