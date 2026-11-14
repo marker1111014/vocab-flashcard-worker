@@ -592,10 +592,10 @@ export default {
     }
     .container {
       width: 100%;
-      max-width: 980px;
+      max-width: 1060px;
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
+      gap: 1rem;
     }
 
     /* 頂部手機切換 Tab (RWD) */
@@ -624,22 +624,17 @@ export default {
     .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
+      gap: 1.5rem;
       align-items: stretch;
-    }
-    @media (max-width: 768px) {
-      .columns { grid-template-columns: 1fr; }
-      .mobile-tabs { display: flex; }
-      .panel.mobile-hidden { display: none !important; }
     }
 
     .panel {
       background: var(--panel-bg);
       border: 1px solid var(--border);
-      padding: 1.4rem;
+      padding: 1.5rem;
       display: flex;
       flex-direction: column;
-      min-height: 480px;
+      min-height: 500px;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
     .panel-header {
@@ -707,8 +702,8 @@ export default {
     .result-box {
       background: #0f172a;
       border: 1px solid var(--border);
-      margin-top: 1rem;
-      padding: 1.25rem;
+      margin-top: 1.15rem;
+      padding: 1.5rem 1.35rem;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -720,8 +715,8 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 4px;
+      gap: 10px;
+      margin-bottom: 6px;
     }
     .word { font-size: 1.85rem; font-weight: bold; color: var(--text); }
     .star-btn {
@@ -741,12 +736,12 @@ export default {
       background: var(--gold-bg);
     }
 
-    /* 詞性與解釋置中樣式 (支援點擊自選主要釋義) */
+    /* 主要釋義置中 + 詞性標籤固定左側排列 (支援點擊自選主要釋義) */
     .trans-section {
       width: 100%;
       border-top: 1px dashed var(--border);
-      margin-top: 12px;
-      padding-top: 10px;
+      margin-top: 16px;
+      padding-top: 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -757,23 +752,23 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      margin-bottom: 8px;
+      gap: 8px;
+      margin-bottom: 16px;
       flex-wrap: wrap;
     }
     .main-trans {
-      font-size: 1.25rem;
+      font-size: 1.35rem;
       font-weight: bold;
       color: var(--accent);
       text-align: center;
-      line-height: 1.35;
+      line-height: 1.4;
     }
     .trans-action-btn {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
       font-size: 0.75rem;
-      padding: 2px 6px;
+      padding: 3px 7px;
       cursor: pointer;
       line-height: 1.2;
       transition: all 0.2s;
@@ -790,11 +785,11 @@ export default {
       gap: 6px;
       width: 100%;
       max-width: 360px;
-      margin-bottom: 8px;
+      margin-bottom: 14px;
     }
     .edit-trans-input {
       flex: 1;
-      padding: 4px 8px;
+      padding: 5px 10px;
       background: var(--card-bg);
       border: 1px solid var(--accent);
       color: var(--text);
@@ -805,7 +800,7 @@ export default {
     }
     .edit-trans-btn {
       border: 1px solid var(--border);
-      padding: 4px 8px;
+      padding: 5px 10px;
       font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
@@ -825,27 +820,29 @@ export default {
     .def-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
+      gap: 12px;
+      align-items: stretch;
+      text-align: left;
       font-size: 0.85rem;
       width: 100%;
     }
     .def-row {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 12px;
+      flex-wrap: nowrap;
       width: 100%;
     }
     .pos-tag {
       background: var(--pos-bg);
       color: var(--accent);
       border: 1px solid var(--pos-border);
-      font-size: 0.72rem;
-      padding: 2px 6px;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      min-width: 58px;
+      text-align: center;
+      line-height: 1.35;
       font-weight: 600;
       white-space: nowrap;
       flex-shrink: 0;
@@ -865,18 +862,22 @@ export default {
     .meaning-wrap {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 7px;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      flex: 1;
+      min-width: 0;
     }
     .meaning-pill {
       display: inline-block;
-      white-space: nowrap;
-      font-size: 0.8rem;
+      max-width: 100%;
+      white-space: normal;
+      text-align: left;
+      font-size: 0.82rem;
       color: #cbd5e1;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
-      padding: 2px 7px;
+      padding: 4px 10px;
       line-height: 1.35;
       cursor: pointer;
       user-select: none;
@@ -895,11 +896,11 @@ export default {
     }
 
     .btn {
-      margin-top: 12px;
+      margin-top: 18px;
       background: var(--accent);
       color: #0f172a;
       border: none;
-      padding: 8px 18px;
+      padding: 9px 20px;
       font-weight: 600;
       font-size: 0.9rem;
       cursor: pointer;
@@ -915,19 +916,19 @@ export default {
     .examples-section {
       width: 100%;
       border-top: 1px dashed var(--border);
-      margin-top: 14px;
-      padding-top: 12px;
+      margin-top: 18px;
+      padding-top: 16px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
       text-align: left;
-      gap: 8px;
+      gap: 10px;
     }
     .examples-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-muted);
       letter-spacing: 0.03em;
@@ -935,27 +936,27 @@ export default {
     .example-list {
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 10px;
       width: 100%;
     }
     .example-card {
       background: rgba(30, 41, 59, 0.55);
       border: 1px solid var(--border);
       border-left: 2px solid var(--accent);
-      padding: 8px 10px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
     .example-en-row {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 8px;
+      gap: 10px;
     }
     .example-en {
-      font-size: 0.86rem;
-      line-height: 1.48;
+      font-size: 0.88rem;
+      line-height: 1.5;
       color: var(--text);
       flex: 1;
       word-break: break-word;
@@ -967,8 +968,8 @@ export default {
       font-weight: 600;
     }
     .example-zh {
-      font-size: 0.8rem;
-      line-height: 1.45;
+      font-size: 0.82rem;
+      line-height: 1.48;
       color: var(--text-muted);
     }
     .example-play-btn {
@@ -976,7 +977,7 @@ export default {
       border: 1px solid var(--border);
       color: var(--text-muted);
       font-size: 0.72rem;
-      padding: 2px 6px;
+      padding: 3px 7px;
       cursor: pointer;
       flex-shrink: 0;
       line-height: 1.3;
@@ -993,8 +994,8 @@ export default {
       background: transparent;
       border: 1px dashed var(--border);
       color: var(--text-muted);
-      font-size: 0.74rem;
-      padding: 5px 8px;
+      font-size: 0.76rem;
+      padding: 7px 10px;
       cursor: pointer;
       text-align: center;
       transition: all 0.2s;
@@ -1009,13 +1010,22 @@ export default {
     .review-box {
       background: #0f172a;
       border: 1px solid var(--border);
-      padding: 1.3rem;
+      padding: 1.5rem 1.35rem;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       flex-grow: 1;
       position: relative;
+    }
+    @media (max-width: 768px) {
+      .columns { grid-template-columns: 1fr; }
+      .mobile-tabs { display: flex; }
+      .panel.mobile-hidden { display: none !important; }
+      .panel { padding: 1.1rem; }
+      .result-box, .review-box { padding: 1.15rem 1rem; }
+      .def-row { gap: 8px; }
+      .pos-tag { min-width: 50px; padding: 4px 6px; }
     }
     .empty-state {
       text-align: center;
@@ -1115,15 +1125,15 @@ export default {
       to { opacity: 1; transform: translateY(0); }
     }
     .card-trans {
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       font-weight: bold;
       color: var(--accent);
-      margin-bottom: 8px;
       text-align: center;
+      line-height: 1.4;
     }
     .card-defs {
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     /* 熟悉的評分按鈕 (1, 2, 3) */
@@ -1536,10 +1546,36 @@ export default {
     const HINT_STORAGE_KEY = 'deck_hide_keyboard_hint_v1';
     const CUSTOM_TRANS_STORAGE = 'deck_custom_trans_v1';
 
+    const KNOWN_POS_SUFFIXES = ['形容詞', '動詞', '及物動詞', '不及物動詞', '名詞', '副詞', '介系詞', '連接詞', '代名詞', '冠詞', '數詞', '感嘆詞', '縮寫', '片語'];
+
+    function stripPosSuffix(text) {
+      let s = (text || '').trim();
+      for (let i = 0; i < KNOWN_POS_SUFFIXES.length; i++) {
+        const suffix = ' (' + KNOWN_POS_SUFFIXES[i] + ')';
+        if (s.endsWith(suffix)) {
+          s = s.slice(0, -suffix.length).trim();
+          break;
+        }
+      }
+      return s;
+    }
+
     function loadCustomTranslations() {
       try {
         const raw = localStorage.getItem(CUSTOM_TRANS_STORAGE);
-        return raw ? JSON.parse(raw) : {};
+        const map = raw ? JSON.parse(raw) : {};
+        let changed = false;
+        Object.keys(map).forEach(k => {
+          const clean = stripPosSuffix(toTraditionalClient(map[k]));
+          if (clean !== map[k]) {
+            map[k] = clean;
+            changed = true;
+          }
+        });
+        if (changed) {
+          try { localStorage.setItem(CUSTOM_TRANS_STORAGE, JSON.stringify(map)); } catch (e) {}
+        }
+        return map;
       } catch (e) {
         return {};
       }
@@ -1569,11 +1605,8 @@ export default {
       saveCustomTranslations(map);
     }
 
-    function formatChosenMeaning(meaning, pos) {
-      const cleanM = (meaning || '').trim();
-      const cleanPos = (pos || '').trim();
-      if (!cleanPos || cleanPos === '釋義') return cleanM;
-      return cleanM + ' (' + cleanPos + ')';
+    function formatChosenMeaning(meaning) {
+      return (meaning || '').trim();
     }
 
     let deck = loadDeck();
@@ -1589,7 +1622,7 @@ export default {
         let updated = false;
         list.forEach(card => {
           if (card.translation) {
-            const t = toTraditionalClient(card.translation);
+            const t = stripPosSuffix(toTraditionalClient(card.translation));
             if (t !== card.translation) { card.translation = t; updated = true; }
           }
           if (Array.isArray(card.definitions)) {
@@ -1829,18 +1862,18 @@ export default {
 
     function updateDefPillsHighlight(currentTransText, targetContainer) {
       const clean = (currentTransText || '').trim();
+      const tokens = clean ? clean.split(/[、;；,，]+/).map(s => s.trim()).filter(Boolean) : [];
       const container = targetContainer || defList;
       if (!container) return;
       const rows = container.querySelectorAll('.def-row');
       rows.forEach(row => {
         const posTag = row.querySelector('.pos-tag');
-        const posText = posTag ? posTag.innerText.trim() : '';
         const pills = row.querySelectorAll('.meaning-pill');
 
         let anyPillActive = false;
         pills.forEach(pill => {
           const mText = pill.innerText.trim();
-          const isActive = Boolean(clean && mText && clean.includes(mText));
+          const isActive = Boolean(clean && mText && (tokens.includes(mText) || clean === mText));
           if (isActive) {
             pill.classList.add('active');
             anyPillActive = true;
@@ -1850,7 +1883,7 @@ export default {
         });
 
         if (posTag) {
-          if (clean && posText && clean.includes('(' + posText + ')') && anyPillActive) {
+          if (anyPillActive) {
             posTag.classList.add('active');
           } else {
             posTag.classList.remove('active');
@@ -1865,16 +1898,17 @@ export default {
       const cleanTrans = toTraditionalClient((newTrans || '').trim());
       if (!cleanTrans) return;
 
-      setCustomTranslation(word, cleanTrans);
-      mainTrans.innerText = cleanTrans;
-      currentSearchData.customTranslation = cleanTrans;
-
       const defTrans = toTraditionalClient(currentSearchData.translation || '');
       if (cleanTrans !== defTrans) {
+        setCustomTranslation(word, cleanTrans);
         resetTransBtn.style.display = 'inline-block';
       } else {
+        setCustomTranslation(word, null);
         resetTransBtn.style.display = 'none';
       }
+
+      mainTrans.innerText = cleanTrans;
+      currentSearchData.customTranslation = cleanTrans;
 
       updateDefPillsHighlight(cleanTrans, defList);
 
@@ -1970,7 +2004,7 @@ export default {
         updateDefPillsHighlight(cleanT, reviewDefList);
         if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
           mainTrans.innerText = cleanT;
-          resetTransBtn.style.display = 'inline-block';
+          resetTransBtn.style.display = (cleanT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
           updateDefPillsHighlight(cleanT, defList);
         }
       }
@@ -2230,7 +2264,7 @@ export default {
               posSpan.addEventListener("click", () => {
                 const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join("、");
                 if (combined) {
-                  applyChosenTranslation(formatChosenMeaning(combined, posText));
+                  applyChosenTranslation(formatChosenMeaning(combined));
                 }
               });
               row.appendChild(posSpan);
@@ -2242,26 +2276,23 @@ export default {
                 pill.className = "meaning-pill";
                 const mText = toTraditionalClient(m);
                 pill.innerText = mText;
-                pill.title = "點擊設為主要釋義：" + formatChosenMeaning(mText, posText);
+                pill.title = "點擊設為主要釋義：" + formatChosenMeaning(mText);
                 pill.addEventListener("click", (e) => {
                   if (e.ctrlKey || e.shiftKey) {
                     const cur = mainTrans.innerText.trim();
-                    if (posText && cur.includes("(" + posText + ")")) {
-                      const base = cur.replace("(" + posText + ")", "").trim();
-                      const parts = base.split("、").map(p => p.trim()).filter(Boolean);
-                      let newParts = [];
-                      if (parts.includes(mText)) {
-                        newParts = parts.filter(p => p !== mText);
-                      } else {
-                        newParts = parts.concat([mText]);
-                      }
-                      if (newParts.length > 0) {
-                        applyChosenTranslation(formatChosenMeaning(newParts.join("、"), posText));
-                        return;
-                      }
+                    const parts = cur.split(/[、;；,，]+/).map(p => p.trim()).filter(Boolean);
+                    let newParts = [];
+                    if (parts.includes(mText)) {
+                      newParts = parts.filter(p => p !== mText);
+                    } else {
+                      newParts = parts.concat([mText]);
+                    }
+                    if (newParts.length > 0) {
+                      applyChosenTranslation(formatChosenMeaning(newParts.join("、")));
+                      return;
                     }
                   }
-                  applyChosenTranslation(formatChosenMeaning(mText, posText));
+                  applyChosenTranslation(formatChosenMeaning(mText));
                 });
                 wrap.appendChild(pill);
               });
@@ -2402,7 +2433,7 @@ export default {
             pos.addEventListener('click', () => {
               const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join('、');
               if (combined) {
-                const newT = formatChosenMeaning(combined, posText);
+                const newT = formatChosenMeaning(combined);
                 currentCard.translation = newT;
                 setCustomTranslation(currentCard.word, newT);
                 saveDeck();
@@ -2410,7 +2441,7 @@ export default {
                 updateDefPillsHighlight(newT, reviewDefList);
                 if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
                   mainTrans.innerText = newT;
-                  resetTransBtn.style.display = 'inline-block';
+                  resetTransBtn.style.display = (newT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
                   updateDefPillsHighlight(newT, defList);
                 }
               }
@@ -2424,9 +2455,9 @@ export default {
               pill.className = 'meaning-pill';
               const mText = toTraditionalClient(m);
               pill.innerText = mText;
-              pill.title = '點擊設為卡片釋義：' + formatChosenMeaning(mText, posText);
+              pill.title = '點擊設為卡片釋義：' + formatChosenMeaning(mText);
               pill.addEventListener('click', () => {
-                const newT = formatChosenMeaning(mText, posText);
+                const newT = formatChosenMeaning(mText);
                 currentCard.translation = newT;
                 setCustomTranslation(currentCard.word, newT);
                 saveDeck();
@@ -2434,7 +2465,7 @@ export default {
                 updateDefPillsHighlight(newT, reviewDefList);
                 if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
                   mainTrans.innerText = newT;
-                  resetTransBtn.style.display = 'inline-block';
+                  resetTransBtn.style.display = (newT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
                   updateDefPillsHighlight(newT, defList);
                 }
               });
@@ -2520,7 +2551,7 @@ export default {
       const map = new Map();
       (remoteDeck || []).forEach(card => {
         if (card && card.word) {
-          if (card.translation) card.translation = toTraditionalClient(card.translation);
+          if (card.translation) card.translation = stripPosSuffix(toTraditionalClient(card.translation));
           if (Array.isArray(card.definitions)) {
             card.definitions.forEach(d => {
               if (d.pos) d.pos = toTraditionalClient(d.pos);
@@ -2532,7 +2563,7 @@ export default {
       });
       (localDeck || []).forEach(card => {
         if (!card || !card.word) return;
-        if (card.translation) card.translation = toTraditionalClient(card.translation);
+        if (card.translation) card.translation = stripPosSuffix(toTraditionalClient(card.translation));
         if (Array.isArray(card.definitions)) {
           card.definitions.forEach(d => {
             if (d.pos) d.pos = toTraditionalClient(d.pos);
