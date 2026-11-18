@@ -1006,10 +1006,53 @@ export default {
       background: rgba(56, 189, 248, 0.06);
     }
 
-    /* 右側：複習面板 (無音標) */
+    /* 右側：複習面板 (無音標，支援翻面與四選一模式切換) */
+    .review-mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+    .mode-switch-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+    .mode-switch-btn {
+      background: transparent;
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 10px 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .mode-switch-btn:last-child {
+      border-right: none;
+    }
+    .mode-switch-btn:hover {
+      color: var(--text);
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .mode-switch-btn.active {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      box-shadow: inset 0 -2px 0 var(--accent);
+      font-weight: 700;
+    }
     .review-box {
       background: #0f172a;
       border: 1px solid var(--border);
+      margin-top: 1.15rem;
       padding: 1.5rem 1.35rem;
       display: flex;
       flex-direction: column;
@@ -1026,6 +1069,7 @@ export default {
       .result-box, .review-box { padding: 1.15rem 1rem; }
       .def-row { gap: 8px; }
       .pos-tag { min-width: 50px; padding: 4px 6px; }
+      .mode-switch-btn { font-size: 0.8rem; padding: 9px 6px; }
     }
     .empty-state {
       text-align: center;
@@ -1158,6 +1202,235 @@ export default {
     .rate-btn.med:hover { background: rgba(234, 179, 8, 0.15); }
     .rate-btn.easy { color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
     .rate-btn.easy:hover { background: rgba(34, 197, 94, 0.15); }
+
+    /* 模式 B：四選一測驗與艾賓浩斯記憶評估 UI */
+    .card-wrap.quiz-active {
+      justify-content: flex-start;
+    }
+    .card-wrap.quiz-active .card-front {
+      margin: 0.55rem 0 0.9rem;
+      gap: 8px;
+    }
+    .quiz-mode-body {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 2px;
+      text-align: left;
+    }
+    .quiz-subbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+    }
+    .quiz-auto-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text-muted);
+    }
+    .quiz-auto-label:hover {
+      color: var(--text);
+    }
+    .quiz-auto-label input {
+      accent-color: var(--accent);
+      cursor: pointer;
+      margin: 0;
+    }
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .quiz-option-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.9rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+    .quiz-option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .quiz-option-btn:disabled {
+      cursor: default;
+    }
+    .quiz-opt-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      font-family: monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--accent);
+    }
+    .quiz-opt-text {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+    .quiz-opt-mark {
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .quiz-option-btn.correct {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+      font-weight: 600;
+    }
+    .quiz-option-btn.correct .quiz-opt-key {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.28);
+      color: #bbf7d0;
+    }
+    .quiz-option-btn.wrong {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.16);
+      color: #fca5a5;
+    }
+    .quiz-option-btn.wrong .quiz-opt-key {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.28);
+      color: #fecaca;
+    }
+    .quiz-option-btn.dimmed {
+      opacity: 0.45;
+    }
+    .quiz-feedback-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      animation: fadeIn 0.2s ease-in;
+    }
+    .quiz-verdict-box {
+      padding: 11px 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quiz-verdict-box.verdict-1 { border-left-color: #ef4444; }
+    .quiz-verdict-box.verdict-2 { border-left-color: #eab308; }
+    .quiz-verdict-box.verdict-3 { border-left-color: #22c55e; }
+    .quiz-verdict-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quiz-verdict-title {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .quiz-verdict-transition {
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--accent);
+    }
+    .quiz-verdict-sub {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .quiz-override-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+    .quiz-override-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-right: 2px;
+    }
+    .quiz-ov-btn {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .quiz-ov-btn:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .quiz-ov-btn.active.lvl-1 {
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.15);
+      font-weight: 700;
+    }
+    .quiz-ov-btn.active.lvl-2 {
+      color: #facc15;
+      border-color: rgba(234, 179, 8, 0.5);
+      background: rgba(234, 179, 8, 0.15);
+      font-weight: 700;
+    }
+    .quiz-ov-btn.active.lvl-3 {
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.15);
+      font-weight: 700;
+    }
+    .quiz-def-list {
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+    }
+    .quiz-def-list .pos-tag,
+    .quiz-def-list .meaning-pill {
+      cursor: default;
+    }
+    .quiz-next-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .quiz-next-btn:hover {
+      opacity: 0.9;
+    }
 
     /* 快捷鍵提示列（支援一鍵隱藏/展開） */
     .hint-wrapper {
@@ -1370,6 +1643,14 @@ export default {
           </div>
         </div>
 
+        <!-- 模式切換開關：翻面記憶 vs 四選一（英翻中） -->
+        <div class="review-mode-bar" role="tablist" aria-label="複習模式切換">
+          <div class="mode-switch-group">
+            <button id="modeFlipBtn" class="mode-switch-btn active" type="button" role="tab" aria-selected="true">🃏 翻面記憶</button>
+            <button id="modeQuizBtn" class="mode-switch-btn" type="button" role="tab" aria-selected="false">🎯 四選一（英翻中）</button>
+          </div>
+        </div>
+
         <div class="review-box">
           <!-- 空狀態 -->
           <div id="reviewEmptyState" class="empty-state">
@@ -1391,29 +1672,65 @@ export default {
               <button id="reviewPlayBtn" class="card-audio-btn">🔊 聽發音 (R)</button>
             </div>
 
-            <!-- 翻面按鈕 -->
-            <div id="flipBtnWrap" class="flip-btn-wrap">
-              <button id="flipBtn" class="flip-btn">🔍 翻面核對 (Space)</button>
+            <!-- 模式 A：經典翻面記憶 -->
+            <div id="flipModeBody" style="width:100%;">
+              <!-- 翻面按鈕 -->
+              <div id="flipBtnWrap" class="flip-btn-wrap">
+                <button id="flipBtn" class="flip-btn">🔍 翻面核對 (Space)</button>
+              </div>
+
+              <!-- 卡片背面 (點擊翻面後呈現，釋義置中) -->
+              <div id="cardBack" class="card-back">
+                <div id="reviewMainTransRow" class="main-trans-row">
+                  <span id="reviewMainTrans" class="card-trans">翻譯</span>
+                  <button id="reviewEditTransBtn" class="trans-action-btn" title="自訂此卡片主要釋義">✏️</button>
+                </div>
+                <div id="reviewEditTransBox" class="edit-trans-box" style="display:none;">
+                  <input type="text" id="reviewEditTransInput" class="edit-trans-input" placeholder="輸入自訂釋義...">
+                  <button id="reviewSaveTransBtn" class="edit-trans-btn save">✓</button>
+                  <button id="reviewCancelTransBtn" class="edit-trans-btn cancel">✕</button>
+                </div>
+                <div id="reviewDefList" class="card-defs def-list"></div>
+
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; text-align:center;">請評估熟悉度：</div>
+                <div class="rate-grid">
+                  <button id="rateHardBtn" class="rate-btn hard">1 生疏<br><span style="font-size:0.7rem;opacity:0.8;">頻繁複習</span></button>
+                  <button id="rateMedBtn" class="rate-btn med">2 模糊<br><span style="font-size:0.7rem;opacity:0.8;">偶爾複習</span></button>
+                  <button id="rateEasyBtn" class="rate-btn easy">3 精通<br><span style="font-size:0.7rem;opacity:0.8;">減少出現</span></button>
+                </div>
+              </div>
             </div>
 
-            <!-- 卡片背面 (點擊翻面後呈現，釋義置中) -->
-            <div id="cardBack" class="card-back">
-              <div id="reviewMainTransRow" class="main-trans-row">
-                <span id="reviewMainTrans" class="card-trans">翻譯</span>
-                <button id="reviewEditTransBtn" class="trans-action-btn" title="自訂此卡片主要釋義">✏️</button>
+            <!-- 模式 B：四選一（英翻中）＋ 艾賓浩斯記憶評估 -->
+            <div id="quizModeBody" class="quiz-mode-body" style="display:none;">
+              <div class="quiz-subbar">
+                <span>選擇最貼切的中文釋義（鍵盤 <kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">1</kbd>-<kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">4</kbd>）</span>
+                <label class="quiz-auto-label" title="答對後約 1.6 秒自動切換下一題">
+                  <input type="checkbox" id="quizAutoNextChk" checked>
+                  <span>⚡ 答對自動下一題</span>
+                </label>
               </div>
-              <div id="reviewEditTransBox" class="edit-trans-box" style="display:none;">
-                <input type="text" id="reviewEditTransInput" class="edit-trans-input" placeholder="輸入自訂釋義...">
-                <button id="reviewSaveTransBtn" class="edit-trans-btn save">✓</button>
-                <button id="reviewCancelTransBtn" class="edit-trans-btn cancel">✕</button>
-              </div>
-              <div id="reviewDefList" class="card-defs def-list"></div>
 
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; text-align:center;">請評估熟悉度：</div>
-              <div class="rate-grid">
-                <button id="rateHardBtn" class="rate-btn hard">1 生疏<br><span style="font-size:0.7rem;opacity:0.8;">頻繁複習</span></button>
-                <button id="rateMedBtn" class="rate-btn med">2 模糊<br><span style="font-size:0.7rem;opacity:0.8;">偶爾複習</span></button>
-                <button id="rateEasyBtn" class="rate-btn easy">3 精通<br><span style="font-size:0.7rem;opacity:0.8;">減少出現</span></button>
+              <div id="quizOptionsGrid" class="quiz-options"></div>
+
+              <div id="quizFeedbackWrap" class="quiz-feedback-wrap" style="display:none;">
+                <div id="quizVerdictBox" class="quiz-verdict-box">
+                  <div class="quiz-verdict-top">
+                    <span id="quizVerdictTitle" class="quiz-verdict-title">🧠 艾賓浩斯記憶判讀</span>
+                    <span id="quizVerdictTransition" class="quiz-verdict-transition">生疏 ➔ 模糊</span>
+                  </div>
+                  <div id="quizVerdictSub" class="quiz-verdict-sub"></div>
+                  <div class="quiz-override-row">
+                    <span class="quiz-override-label">手動微調：</span>
+                    <button type="button" class="quiz-ov-btn lvl-1" data-lvl="1">🔴 生疏</button>
+                    <button type="button" class="quiz-ov-btn lvl-2" data-lvl="2">🟡 模糊</button>
+                    <button type="button" class="quiz-ov-btn lvl-3" data-lvl="3">🟢 精通</button>
+                  </div>
+                </div>
+
+                <div id="quizDefList" class="quiz-def-list def-list" style="display:none;"></div>
+
+                <button id="quizNextBtn" class="quiz-next-btn" type="button">下一題 ➔ (Space / Enter)</button>
               </div>
             </div>
           </div>
@@ -1425,7 +1742,7 @@ export default {
     <div class="hint-wrapper">
       <div id="hintBar" class="keyboard-hint">
         <div class="hint-text">
-          ⚡ 快捷鍵：<kbd>Tab</kbd> 定位查詢 ｜ <kbd>Enter</kbd> 查詢/發音 ｜ <kbd>Alt</kbd> 收藏 ｜ <kbd>ddd</kbd> 清空 ｜ <kbd>Space</kbd> 翻面 ｜ <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> 評分 ｜ <kbd>R</kbd> 聽發音
+          ⚡ 快捷鍵：<kbd>Tab</kbd> 定位查詢 ｜ <kbd>Enter</kbd> 查詢/發音 ｜ <kbd>Alt</kbd> 收藏 ｜ <kbd>ddd</kbd> 清空 ｜ <kbd>Space</kbd> 翻面/下一題 ｜ <kbd>1</kbd>-<kbd>4</kbd> 作答/評分 ｜ <kbd>R</kbd> 聽發音
         </div>
         <button id="hideHintBtn" class="hint-toggle-btn" title="隱藏此快捷鍵提示">✕ 隱藏</button>
       </div>
@@ -1545,6 +1862,32 @@ export default {
     const LAST_SYNC_STORAGE = 'deck_last_sync_v1';
     const HINT_STORAGE_KEY = 'deck_hide_keyboard_hint_v1';
     const CUSTOM_TRANS_STORAGE = 'deck_custom_trans_v1';
+    const REVIEW_MODE_STORAGE = 'deck_review_mode_v1';
+    const QUIZ_AUTONEXT_STORAGE = 'deck_quiz_autonext_v1';
+    const DAY_MS = 86400000;
+
+    const QUIZ_FALLBACK_DISTRACTORS = [
+      '猶豫、遲疑',
+      '充足的、豐富的',
+      '臨時的、暫時的',
+      '顯著地、明顯地',
+      '維持、保養',
+      '拒絕、回絕',
+      '擴大、膨脹',
+      '精密的、細緻的',
+      '獲得、取得',
+      '荒謬的、可笑的',
+      '妥協、讓步',
+      '鼓勵、激勵',
+      '脆弱的、易碎的',
+      '遵守、觀察',
+      '效率、效能',
+      '稀有的、罕見的',
+      '抱怨、投訴',
+      '承諾、保證',
+      '謹慎的、小心的',
+      '迅速地、立即地'
+    ];
 
     const KNOWN_POS_SUFFIXES = ['形容詞', '動詞', '及物動詞', '不及物動詞', '名詞', '副詞', '介系詞', '連接詞', '代名詞', '冠詞', '數詞', '感嘆詞', '縮寫', '片語'];
 
@@ -1614,6 +1957,21 @@ export default {
     let isFlipped = false;
     let recentHistory = [];
     let currentSearchData = null;
+
+    let reviewMode = 'flip';
+    let quizAutoNext = true;
+    try {
+      if (localStorage.getItem(REVIEW_MODE_STORAGE) === 'quiz') reviewMode = 'quiz';
+      if (localStorage.getItem(QUIZ_AUTONEXT_STORAGE) === 'false') quizAutoNext = false;
+    } catch (e) {}
+
+    let quizQuestionStartAt = 0;
+    let quizAnswered = false;
+    let quizCurrentOptions = [];
+    let quizActiveWord = null;
+    let lastQuizChosenIdx = -1;
+    let lastQuizVerdict = null;
+    let quizAutoNextTimer = null;
 
     function loadDeck() {
       try {
@@ -1692,12 +2050,15 @@ export default {
     const tabReviewBtn = document.getElementById('tabReviewBtn');
     const tabBadge = document.getElementById('tabBadge');
     const deckCountBadge = document.getElementById('deckCountBadge');
+    const modeFlipBtn = document.getElementById('modeFlipBtn');
+    const modeQuizBtn = document.getElementById('modeQuizBtn');
     const reviewEmptyState = document.getElementById('reviewEmptyState');
     const reviewCard = document.getElementById('reviewCard');
     const cardLevelTag = document.getElementById('cardLevelTag');
     const cardStats = document.getElementById('cardStats');
     const reviewWord = document.getElementById('reviewWord');
     const reviewPlayBtn = document.getElementById('reviewPlayBtn');
+    const flipModeBody = document.getElementById('flipModeBody');
     const flipBtn = document.getElementById('flipBtn');
     const cardBack = document.getElementById('cardBack');
     const reviewMainTransRow = document.getElementById('reviewMainTransRow');
@@ -1711,6 +2072,17 @@ export default {
     const rateHardBtn = document.getElementById('rateHardBtn');
     const rateMedBtn = document.getElementById('rateMedBtn');
     const rateEasyBtn = document.getElementById('rateEasyBtn');
+    const quizModeBody = document.getElementById('quizModeBody');
+    const quizAutoNextChk = document.getElementById('quizAutoNextChk');
+    const quizOptionsGrid = document.getElementById('quizOptionsGrid');
+    const quizFeedbackWrap = document.getElementById('quizFeedbackWrap');
+    const quizVerdictBox = document.getElementById('quizVerdictBox');
+    const quizVerdictTitle = document.getElementById('quizVerdictTitle');
+    const quizVerdictTransition = document.getElementById('quizVerdictTransition');
+    const quizVerdictSub = document.getElementById('quizVerdictSub');
+    const quizDefList = document.getElementById('quizDefList');
+    const quizNextBtn = document.getElementById('quizNextBtn');
+    const quizOvBtns = document.querySelectorAll('.quiz-ov-btn');
 
     // 提示列 DOM
     const hintBar = document.getElementById('hintBar');
@@ -1845,6 +2217,10 @@ export default {
           level: 1,
           reviewCount: 0,
           lastReviewed: 0,
+          streak: 0,
+          ease: 2.3,
+          intervalDays: 0.5,
+          nextReviewAt: 0,
           addedAt: Date.now()
         };
         deck.unshift(newCard);
@@ -1915,12 +2291,15 @@ export default {
       const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
       if (deckIdx >= 0) {
         deck[deckIdx].translation = cleanTrans;
-        saveDeck();
         if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
           currentCard.translation = cleanTrans;
+          if (reviewMode === 'quiz' && !quizAnswered) {
+            prepareQuizQuestionForCard(currentCard);
+          }
           reviewMainTrans.innerText = cleanTrans;
           updateDefPillsHighlight(cleanTrans, reviewDefList);
         }
+        saveDeck();
       }
     }
 
@@ -1937,12 +2316,15 @@ export default {
       const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
       if (deckIdx >= 0) {
         deck[deckIdx].translation = defTrans;
-        saveDeck();
         if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
           currentCard.translation = defTrans;
+          if (reviewMode === 'quiz' && !quizAnswered) {
+            prepareQuizQuestionForCard(currentCard);
+          }
           reviewMainTrans.innerText = defTrans;
           updateDefPillsHighlight(defTrans, reviewDefList);
         }
+        saveDeck();
       }
     }
 
@@ -1999,6 +2381,9 @@ export default {
         const cleanT = toTraditionalClient(val);
         currentCard.translation = cleanT;
         setCustomTranslation(currentCard.word, cleanT);
+        if (reviewMode === 'quiz' && !quizAnswered) {
+          prepareQuizQuestionForCard(currentCard);
+        }
         saveDeck();
         reviewMainTrans.innerText = cleanT;
         updateDefPillsHighlight(cleanT, reviewDefList);
@@ -2341,21 +2726,568 @@ export default {
     }
 
     // ==========================================
-    // 6. 右側單字複習庫與防猜答邏輯
+    // 6. 右側單字複習庫：翻面記憶 ＋ 四選一（英翻中）＋ 艾賓浩斯記憶評估
     // ==========================================
+    function clearQuizAutoNextTimer() {
+      if (quizAutoNextTimer) {
+        clearTimeout(quizAutoNextTimer);
+        quizAutoNextTimer = null;
+      }
+    }
+
+    function levelLabelText(lvl) {
+      if (lvl === 1) return '🔴 生疏';
+      if (lvl === 2) return '🟡 模糊';
+      return '🟢 精通';
+    }
+
+    function getCardMemoryMeta(card) {
+      const lvl = (card && (card.level === 1 || card.level === 2 || card.level === 3)) ? card.level : 1;
+      const defaultInt = lvl === 3 ? 6 : (lvl === 2 ? 2 : 0.5);
+      const intervalDays = (card && typeof card.intervalDays === 'number' && card.intervalDays > 0) ? card.intervalDays : defaultInt;
+      const ease = (card && typeof card.ease === 'number' && card.ease >= 1.3) ? card.ease : 2.3;
+      const streak = (card && typeof card.streak === 'number' && card.streak >= 0) ? card.streak : 0;
+      const lastReviewed = (card && typeof card.lastReviewed === 'number') ? card.lastReviewed : 0;
+      const nextReviewAt = (card && typeof card.nextReviewAt === 'number')
+        ? card.nextReviewAt
+        : (lastReviewed > 0 ? lastReviewed + Math.round(intervalDays * DAY_MS) : 0);
+      return { level: lvl, intervalDays, ease, streak, lastReviewed, nextReviewAt };
+    }
+
+    function computeEbbinghausRetention(card, nowMs) {
+      const now = nowMs || Date.now();
+      const meta = getCardMemoryMeta(card);
+      let elapsedDays = 0;
+      let stabilityDays = Math.max(0.25, meta.intervalDays);
+      if (meta.lastReviewed > 0) {
+        elapsedDays = Math.max(0, (now - meta.lastReviewed) / DAY_MS);
+      } else {
+        const added = (card && typeof card.addedAt === 'number' && card.addedAt > 0) ? card.addedAt : now;
+        elapsedDays = Math.max(0, (now - added) / DAY_MS);
+        stabilityDays = 0.5;
+      }
+      const ret = Math.exp(-0.2877 * (elapsedDays / stabilityDays));
+      return Math.max(5, Math.min(100, Math.round(ret * 100)));
+    }
+
+    function formatIntervalZh(days) {
+      if (days < 1) {
+        return Math.max(1, Math.round(days * 24)) + ' 小時';
+      }
+      if (days < 2 && !Number.isInteger(days)) {
+        return days.toFixed(1) + ' 天';
+      }
+      return Math.round(days) + ' 天';
+    }
+
+    function formatElapsedZh(days) {
+      if (days < (1 / 24)) {
+        return Math.max(1, Math.round(days * 24 * 60)) + ' 分鐘';
+      }
+      if (days < 1) {
+        return Math.max(1, Math.round(days * 24)) + ' 小時';
+      }
+      return (Math.round(days * 10) / 10) + ' 天';
+    }
+
+    function shuffleArray(list) {
+      const arr = list.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
+      }
+      return arr;
+    }
+
+    function getCleanCardTranslation(card) {
+      if (!card) return '';
+      const raw = stripPosSuffix(toTraditionalClient((card.translation || '').trim()));
+      if (raw) return raw;
+      if (Array.isArray(card.definitions) && card.definitions.length > 0) {
+        const firstMeanings = card.definitions[0].meanings || [];
+        if (firstMeanings.length > 0) {
+          return firstMeanings.slice(0, 2).map(m => toTraditionalClient(m)).join('、').trim();
+        }
+      }
+      return '';
+    }
+
+    function tokenizeMeaningParts(str) {
+      return (str || '').split(/[、;；,，]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+    }
+
+    function buildQuizOptions(targetCard) {
+      const targetText = getCleanCardTranslation(targetCard) || '（無翻譯）';
+      const targetForbidden = new Set();
+      const targetTokens = new Set();
+
+      const registerForbidden = (txt) => {
+        const clean = stripPosSuffix(toTraditionalClient((txt || '').trim())).toLowerCase();
+        if (!clean) return;
+        targetForbidden.add(clean);
+        tokenizeMeaningParts(clean).forEach(tok => targetTokens.add(tok));
+      };
+
+      registerForbidden(targetText);
+      if (Array.isArray(targetCard.definitions)) {
+        targetCard.definitions.forEach(d => {
+          const ms = (d.meanings || []).map(m => toTraditionalClient(m));
+          ms.forEach(m => registerForbidden(m));
+          if (ms.length >= 2) registerForbidden(ms.slice(0, 2).join('、'));
+        });
+      }
+
+      const usedTexts = new Set([targetText.toLowerCase()]);
+      const distractors = [];
+
+      const isCollision = (candText) => {
+        const low = (candText || '').trim().toLowerCase();
+        if (!low) return true;
+        if (usedTexts.has(low) || targetForbidden.has(low)) return true;
+        const toks = tokenizeMeaningParts(low);
+        for (let i = 0; i < toks.length; i++) {
+          if (targetTokens.has(toks[i])) return true;
+        }
+        return false;
+      };
+
+      const otherCards = shuffleArray(
+        deck.filter(c => c && c.word && c.word.toLowerCase() !== targetCard.word.toLowerCase())
+      );
+
+      for (let i = 0; i < otherCards.length && distractors.length < 3; i++) {
+        const candText = getCleanCardTranslation(otherCards[i]);
+        if (candText && !isCollision(candText)) {
+          usedTexts.add(candText.toLowerCase());
+          distractors.push({ text: candText, isCorrect: false, sourceWord: otherCards[i].word });
+        }
+      }
+
+      if (distractors.length < 3) {
+        const fallbacks = shuffleArray(QUIZ_FALLBACK_DISTRACTORS);
+        for (let i = 0; i < fallbacks.length && distractors.length < 3; i++) {
+          const fb = toTraditionalClient(fallbacks[i]).trim();
+          if (fb && !isCollision(fb)) {
+            usedTexts.add(fb.toLowerCase());
+            distractors.push({ text: fb, isCorrect: false, sourceWord: null });
+          }
+        }
+      }
+
+      const options = [{ text: targetText, isCorrect: true, sourceWord: targetCard.word }].concat(distractors);
+      return shuffleArray(options);
+    }
+
+    function prepareQuizQuestionForCard(card) {
+      clearQuizAutoNextTimer();
+      quizAnswered = false;
+      lastQuizChosenIdx = -1;
+      lastQuizVerdict = null;
+      quizActiveWord = card ? card.word.toLowerCase() : null;
+      quizCurrentOptions = card ? buildQuizOptions(card) : [];
+      quizQuestionStartAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    }
+
+    function evaluateEbbinghausQuizAnswer(card, isCorrect, responseMs, nowMs) {
+      const now = nowMs || Date.now();
+      const meta = getCardMemoryMeta(card);
+      const oldLevel = meta.level;
+      const retentionPct = computeEbbinghausRetention(card, now);
+      const elapsedDays = meta.lastReviewed > 0 ? Math.max(0.01, (now - meta.lastReviewed) / DAY_MS) : 0;
+      const isSpaced = meta.lastReviewed > 0 && elapsedDays >= 0.5;
+      const secText = responseMs >= 60000
+        ? (Math.round(responseMs / 1000) + ' 秒')
+        : ((responseMs / 1000).toFixed(1) + ' 秒');
+
+      let newLevel = oldLevel;
+      let newStreak = meta.streak;
+      let newEase = meta.ease;
+      let newIntervalDays = meta.intervalDays;
+      let speedTier = 'normal';
+      let reason = '';
+
+      if (!isCorrect) {
+        speedTier = 'wrong';
+        newLevel = 1;
+        newStreak = 0;
+        newEase = Math.max(1.3, +(meta.ease - 0.25).toFixed(2));
+        newIntervalDays = 0.25;
+        reason = oldLevel > 1
+          ? ('答錯遺忘：記憶曲線中斷，降回「生疏」並在 6 小時內優先鞏固。')
+          : ('答錯需重記：已縮短間隔週期為 6 小時，強化初始記憶迴路。');
+      } else if (responseMs <= 2600) {
+        speedTier = 'fast';
+        newStreak = meta.streak + 1;
+        newEase = Math.min(2.8, +(meta.ease + 0.1).toFixed(2));
+        if (oldLevel === 1) {
+          newLevel = 2;
+          newIntervalDays = isSpaced ? 2 : 1;
+          reason = isSpaced
+            ? ('間隔 ' + formatElapsedZh(elapsedDays) + ' 後極速提取（' + secText + '），記憶穩步上升為「模糊」。')
+            : ('反應極快（' + secText + '）！為避免初學單次猜中，先升為「模糊」進入間隔驗證。');
+        } else if (oldLevel === 2) {
+          if (newStreak >= 2 || isSpaced || (card.reviewCount || 0) >= 1) {
+            newLevel = 3;
+            newIntervalDays = Math.min(30, Math.max(4, Math.round(meta.intervalDays * newEase)));
+            reason = isSpaced
+              ? ('跨間隔快速秒答（' + secText + '），長期保留達標，晉升「精通」！')
+              : ('連續穩定且極速回憶（' + secText + '），艾賓浩斯曲線確認「精通」。');
+          } else {
+            newLevel = 2;
+            newIntervalDays = 2;
+            reason = '首次快速答對（' + secText + '），延長間隔至 2 天驗證即可晉升「精通」。';
+          }
+        } else {
+          newLevel = 3;
+          const baseInt = Math.max(meta.intervalDays, elapsedDays >= meta.intervalDays ? elapsedDays : meta.intervalDays);
+          newIntervalDays = Math.min(60, Math.max(meta.intervalDays + 2, Math.round(baseInt * newEase)));
+          reason = '長期記憶極為穩固（' + secText + '），維持「精通」並延展至 ' + formatIntervalZh(newIntervalDays) + '。';
+        }
+      } else if (responseMs <= 5500) {
+        speedTier = 'normal';
+        newStreak = meta.streak + 1;
+        newEase = Math.max(1.5, Math.min(2.6, meta.ease));
+        if (oldLevel === 1) {
+          if (newStreak >= 2 || elapsedDays >= 1) {
+            newLevel = 2;
+            newIntervalDays = 1.5;
+            reason = '正常思考後穩定答對（' + secText + '），累積連對進入「模糊」鞏固期。';
+          } else {
+            newLevel = 1;
+            newIntervalDays = 0.5;
+            reason = '雖有答對但仍在提取思考（' + secText + '），暫維持「生疏」等待下次確認。';
+          }
+        } else if (oldLevel === 2) {
+          if (elapsedDays >= 1.5 && newStreak >= 2) {
+            newLevel = 3;
+            newIntervalDays = Math.min(14, Math.max(4, Math.round(meta.intervalDays * 1.8)));
+            reason = '經歷遺忘谷底後仍穩定回憶（' + secText + '），晉升「精通」。';
+          } else {
+            newLevel = 2;
+            newIntervalDays = Math.min(5, Math.max(2, +(meta.intervalDays * 1.4).toFixed(1)));
+            reason = '正常時間內正確回憶（' + secText + '），維持「模糊」並適度拉長間隔。';
+          }
+        } else {
+          newLevel = 3;
+          newIntervalDays = Math.min(30, Math.max(meta.intervalDays + 1, Math.round(meta.intervalDays * 1.35)));
+          reason = '穩定提取中（' + secText + '），維持「精通」並將下次複習延後至 ' + formatIntervalZh(newIntervalDays) + '。';
+        }
+      } else {
+        speedTier = 'slow';
+        newStreak = 0;
+        newEase = Math.max(1.3, +(meta.ease - 0.15).toFixed(2));
+        if (oldLevel === 3) {
+          newLevel = 2;
+          newIntervalDays = 1;
+          reason = '長考警示：耗時 ' + secText + ' 才回憶出釋義，記憶已出現衰退徵兆，降為「模糊」於 1 天後重溫。';
+        } else if (oldLevel === 2) {
+          newLevel = 2;
+          newIntervalDays = 1;
+          reason = '思考較久才作答成功（' + secText + '），提取尚不順暢，維持「模糊」並縮短至 1 天。';
+        } else {
+          newLevel = 1;
+          newIntervalDays = 0.5;
+          reason = '回憶耗時過長（' + secText + '），代表記憶連結仍薄弱，維持「生疏」優先出現。';
+        }
+      }
+
+      const nextReviewAt = now + Math.round(newIntervalDays * DAY_MS);
+      return {
+        oldLevel,
+        newLevel,
+        newStreak,
+        newEase,
+        newIntervalDays,
+        nextReviewAt,
+        retentionPct,
+        responseMs,
+        secText,
+        speedTier,
+        isCorrect,
+        reason,
+        manualOverride: false
+      };
+    }
+
+    function applyEbbinghausManualRating(card, manualLvl) {
+      if (!card) return;
+      clearQuizAutoNextTimer();
+      const now = Date.now();
+      const meta = getCardMemoryMeta(card);
+      const prevAutoLvl = card.level;
+      let newInterval = 0.5;
+      let newEase = meta.ease;
+      let newStreak = meta.streak;
+
+      if (manualLvl === 1) {
+        newInterval = 0.25;
+        newStreak = 0;
+        newEase = Math.max(1.3, +(meta.ease - 0.15).toFixed(2));
+      } else if (manualLvl === 2) {
+        newInterval = Math.max(1, Math.min(3, Math.round(meta.intervalDays)));
+        newStreak = Math.max(1, meta.streak);
+      } else {
+        newInterval = Math.max(5, Math.min(30, Math.round(meta.intervalDays * 2)));
+        newStreak = Math.max(2, meta.streak + 1);
+        newEase = Math.min(2.8, +(meta.ease + 0.08).toFixed(2));
+      }
+
+      card.level = manualLvl;
+      card.intervalDays = newInterval;
+      card.ease = newEase;
+      card.streak = newStreak;
+      card.nextReviewAt = now + Math.round(newInterval * DAY_MS);
+
+      if (lastQuizVerdict) {
+        lastQuizVerdict.newLevel = manualLvl;
+        lastQuizVerdict.newIntervalDays = newInterval;
+        lastQuizVerdict.nextReviewAt = card.nextReviewAt;
+        lastQuizVerdict.manualOverride = true;
+        lastQuizVerdict.reason = '已手動由 ' + levelLabelText(prevAutoLvl) + ' 調整為 ' + levelLabelText(manualLvl) + '，下次間隔重設為 ' + formatIntervalZh(newInterval) + '。';
+      }
+
+      saveDeck();
+    }
+
+    function submitQuizAnswer(optIdx) {
+      if (!currentCard || reviewMode !== 'quiz' || quizAnswered) return;
+      if (!quizCurrentOptions || !quizCurrentOptions[optIdx]) return;
+
+      clearQuizAutoNextTimer();
+      const nowPerf = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const responseMs = Math.max(120, Math.round(nowPerf - quizQuestionStartAt));
+      const chosen = quizCurrentOptions[optIdx];
+      const now = Date.now();
+
+      const verdict = evaluateEbbinghausQuizAnswer(currentCard, chosen.isCorrect, responseMs, now);
+      currentCard.level = verdict.newLevel;
+      currentCard.reviewCount = (currentCard.reviewCount || 0) + 1;
+      currentCard.lastReviewed = now;
+      currentCard.streak = verdict.newStreak;
+      currentCard.ease = verdict.newEase;
+      currentCard.intervalDays = verdict.newIntervalDays;
+      currentCard.nextReviewAt = verdict.nextReviewAt;
+      currentCard.lastResponseMs = responseMs;
+
+      quizAnswered = true;
+      lastQuizChosenIdx = optIdx;
+      lastQuizVerdict = verdict;
+
+      saveDeck();
+
+      if (chosen.isCorrect && quizAutoNext) {
+        quizAutoNextTimer = setTimeout(() => {
+          advanceQuizNext();
+        }, 1600);
+      }
+    }
+
+    function advanceQuizNext() {
+      clearQuizAutoNextTimer();
+      loadNextReviewCard();
+    }
+
+    function renderQuizDefsForReview(card) {
+      quizDefList.innerHTML = '';
+      if (!card || !Array.isArray(card.definitions) || card.definitions.length === 0) {
+        quizDefList.style.display = 'none';
+        return;
+      }
+      const curTrans = toTraditionalClient(card.translation || '');
+      card.definitions.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'def-row';
+        const pos = document.createElement('span');
+        pos.className = 'pos-tag';
+        pos.innerText = toTraditionalClient(d.pos || '');
+        row.appendChild(pos);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'meaning-wrap';
+        (d.meanings || []).forEach(m => {
+          const pill = document.createElement('span');
+          pill.className = 'meaning-pill';
+          pill.innerText = toTraditionalClient(m);
+          wrap.appendChild(pill);
+        });
+        row.appendChild(wrap);
+        quizDefList.appendChild(row);
+      });
+      updateDefPillsHighlight(curTrans, quizDefList);
+      quizDefList.style.display = 'flex';
+    }
+
+    function renderQuizUI() {
+      if (!currentCard) return;
+      quizAutoNextChk.checked = quizAutoNext;
+      quizOptionsGrid.innerHTML = '';
+
+      quizCurrentOptions.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-option-btn';
+
+        const keyBadge = document.createElement('span');
+        keyBadge.className = 'quiz-opt-key';
+        keyBadge.innerText = String(idx + 1);
+
+        const txtSpan = document.createElement('span');
+        txtSpan.className = 'quiz-opt-text';
+        txtSpan.innerText = opt.text;
+
+        btn.appendChild(keyBadge);
+        btn.appendChild(txtSpan);
+
+        if (quizAnswered) {
+          btn.disabled = true;
+          if (opt.isCorrect) {
+            btn.classList.add('correct');
+            const mk = document.createElement('span');
+            mk.className = 'quiz-opt-mark';
+            mk.innerText = '✓';
+            btn.appendChild(mk);
+          } else if (idx === lastQuizChosenIdx) {
+            btn.classList.add('wrong');
+            const mk = document.createElement('span');
+            mk.className = 'quiz-opt-mark';
+            mk.innerText = '✕';
+            btn.appendChild(mk);
+          } else {
+            btn.classList.add('dimmed');
+          }
+        } else {
+          btn.addEventListener('click', () => submitQuizAnswer(idx));
+        }
+
+        quizOptionsGrid.appendChild(btn);
+      });
+
+      if (quizAnswered && lastQuizVerdict) {
+        const v = lastQuizVerdict;
+        quizVerdictBox.className = 'quiz-verdict-box verdict-' + v.newLevel;
+
+        if (v.manualOverride) {
+          quizVerdictTitle.innerText = '✋ 手動調整熟悉度';
+          quizVerdictTransition.innerText = levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays);
+        } else {
+          quizVerdictTitle.innerText = v.isCorrect
+            ? ('✅ 答對！艾賓浩斯判讀（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）')
+            : ('❌ 答錯！艾賓浩斯重置（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）');
+          quizVerdictTransition.innerText = (v.oldLevel === v.newLevel)
+            ? ('維持 ' + levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays))
+            : (levelLabelText(v.oldLevel) + ' ➔ ' + levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays));
+        }
+
+        quizVerdictSub.innerText = v.reason;
+
+        quizOvBtns.forEach(btn => {
+          const lvl = parseInt(btn.getAttribute('data-lvl'), 10);
+          if (lvl === currentCard.level) btn.classList.add('active');
+          else btn.classList.remove('active');
+        });
+
+        if (!v.isCorrect) {
+          renderQuizDefsForReview(currentCard);
+        } else {
+          quizDefList.style.display = 'none';
+        }
+
+        if (v.isCorrect && quizAutoNext && !v.manualOverride) {
+          quizNextBtn.innerText = '下一題 ➔ (1.6 秒後自動切換 · Space)';
+        } else {
+          quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+        }
+
+        quizFeedbackWrap.style.display = 'flex';
+      } else {
+        quizFeedbackWrap.style.display = 'none';
+        quizDefList.style.display = 'none';
+      }
+    }
+
+    function updateModeSwitchUI() {
+      if (reviewMode === 'quiz') {
+        modeQuizBtn.classList.add('active');
+        modeQuizBtn.setAttribute('aria-selected', 'true');
+        modeFlipBtn.classList.remove('active');
+        modeFlipBtn.setAttribute('aria-selected', 'false');
+      } else {
+        modeFlipBtn.classList.add('active');
+        modeFlipBtn.setAttribute('aria-selected', 'true');
+        modeQuizBtn.classList.remove('active');
+        modeQuizBtn.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    function setReviewMode(mode) {
+      const target = mode === 'quiz' ? 'quiz' : 'flip';
+      if (reviewMode === target && ((target === 'flip') || quizActiveWord)) {
+        updateModeSwitchUI();
+        return;
+      }
+      clearQuizAutoNextTimer();
+      reviewMode = target;
+      try { localStorage.setItem(REVIEW_MODE_STORAGE, reviewMode); } catch (e) {}
+      updateModeSwitchUI();
+      isFlipped = false;
+      if (currentCard) {
+        if (reviewMode === 'quiz') {
+          prepareQuizQuestionForCard(currentCard);
+        } else {
+          quizAnswered = false;
+          quizActiveWord = null;
+        }
+        renderCardState();
+      }
+    }
+
+    modeFlipBtn.addEventListener('click', () => setReviewMode('flip'));
+    modeQuizBtn.addEventListener('click', () => setReviewMode('quiz'));
+
+    quizAutoNextChk.addEventListener('change', () => {
+      quizAutoNext = !!quizAutoNextChk.checked;
+      try { localStorage.setItem(QUIZ_AUTONEXT_STORAGE, String(quizAutoNext)); } catch (e) {}
+      if (!quizAutoNext) {
+        clearQuizAutoNextTimer();
+        if (quizAnswered && lastQuizVerdict) {
+          quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+        }
+      }
+    });
+
+    quizNextBtn.addEventListener('click', advanceQuizNext);
+
+    quizOvBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lvl = parseInt(btn.getAttribute('data-lvl'), 10);
+        if (currentCard && (lvl === 1 || lvl === 2 || lvl === 3)) {
+          applyEbbinghausManualRating(currentCard, lvl);
+        }
+      });
+    });
+
     function updateDeckUI() {
       deckCountBadge.innerText = deck.length + ' 個';
       tabBadge.innerText = deck.length;
 
       if (deck.length === 0) {
+        clearQuizAutoNextTimer();
         reviewEmptyState.style.display = 'block';
         reviewCard.style.display = 'none';
         currentCard = null;
+        quizActiveWord = null;
+        quizAnswered = false;
+        quizCurrentOptions = [];
+        lastQuizVerdict = null;
       } else {
         reviewEmptyState.style.display = 'none';
         if (!currentCard || !isWordInDeck(currentCard.word)) {
           loadNextReviewCard();
         } else {
+          const fresh = deck.find(c => c.word.toLowerCase() === currentCard.word.toLowerCase());
+          if (fresh) currentCard = fresh;
           renderCardState();
         }
       }
@@ -2367,11 +3299,15 @@ export default {
 
       const candidates = deck.filter(c => !recentHistory.includes(c.word.toLowerCase()));
       const pool = candidates.length > 0 ? candidates : deck;
+      const now = Date.now();
 
       const weights = pool.map(c => {
-        if (c.level === 1) return 6;
-        if (c.level === 2) return 3;
-        return 1;
+        let base = 1;
+        if (c.level === 1) base = 6;
+        else if (c.level === 2) base = 3;
+        const meta = getCardMemoryMeta(c);
+        const isDue = (meta.nextReviewAt === 0 || now >= meta.nextReviewAt);
+        return isDue ? base * 1.8 : base;
       });
 
       const totalWeight = weights.reduce((a, b) => a + b, 0);
@@ -2385,6 +3321,7 @@ export default {
     }
 
     function loadNextReviewCard() {
+      clearQuizAutoNextTimer();
       if (deck.length === 0) {
         updateDeckUI();
         return;
@@ -2397,6 +3334,14 @@ export default {
         }
       }
       isFlipped = false;
+      if (reviewMode === 'quiz' && currentCard) {
+        prepareQuizQuestionForCard(currentCard);
+      } else {
+        quizAnswered = false;
+        quizActiveWord = null;
+        quizCurrentOptions = [];
+        lastQuizVerdict = null;
+      }
       renderCardState();
     }
 
@@ -2405,12 +3350,32 @@ export default {
 
       reviewCard.style.display = 'flex';
       reviewWord.innerText = currentCard.word;
-      cardStats.innerText = '已複習 ' + (currentCard.reviewCount || 0) + ' 次';
+      const revCount = currentCard.reviewCount || 0;
+      if (revCount > 0 && currentCard.lastReviewed > 0) {
+        const estRet = computeEbbinghausRetention(currentCard, Date.now());
+        cardStats.innerText = '已複習 ' + revCount + ' 次 · 保留率 ' + estRet + '%';
+      } else {
+        cardStats.innerText = '已複習 ' + revCount + ' 次';
+      }
 
       cardLevelTag.className = 'level-badge lvl-' + currentCard.level;
-      if (currentCard.level === 1) cardLevelTag.innerText = '🔴 生疏';
-      else if (currentCard.level === 2) cardLevelTag.innerText = '🟡 模糊';
-      else cardLevelTag.innerText = '🟢 精通';
+      cardLevelTag.innerText = levelLabelText(currentCard.level);
+
+      reviewCard.classList.toggle('quiz-active', reviewMode === 'quiz');
+
+      if (reviewMode === 'quiz') {
+        flipModeBody.style.display = 'none';
+        quizModeBody.style.display = 'flex';
+        closeReviewInlineEdit();
+        if (!quizActiveWord || quizActiveWord !== currentCard.word.toLowerCase() || quizCurrentOptions.length !== 4) {
+          prepareQuizQuestionForCard(currentCard);
+        }
+        renderQuizUI();
+        return;
+      }
+
+      flipModeBody.style.display = 'block';
+      quizModeBody.style.display = 'none';
 
       if (!isFlipped) {
         closeReviewInlineEdit();
@@ -2485,7 +3450,7 @@ export default {
     }
 
     function flipCard() {
-      if (!currentCard || isFlipped) return;
+      if (!currentCard || isFlipped || reviewMode !== 'flip') return;
       isFlipped = true;
       renderCardState();
     }
@@ -2499,10 +3464,31 @@ export default {
     });
 
     function rateFamiliarity(level) {
-      if (!currentCard || !isFlipped) return;
+      if (!currentCard || !isFlipped || reviewMode !== 'flip') return;
+      const now = Date.now();
+      const meta = getCardMemoryMeta(currentCard);
+      let nextInterval = 0.5;
+      let nextStreak = meta.streak;
+      let nextEase = meta.ease;
+      if (level === 1) {
+        nextInterval = 0.25;
+        nextStreak = 0;
+        nextEase = Math.max(1.3, +(meta.ease - 0.2).toFixed(2));
+      } else if (level === 2) {
+        nextInterval = Math.max(1, Math.min(3, Math.round(meta.intervalDays * 1.2)));
+        nextStreak = meta.streak + 1;
+      } else {
+        nextInterval = Math.min(30, Math.max(4, Math.round(meta.intervalDays * meta.ease)));
+        nextStreak = meta.streak + 1;
+        nextEase = Math.min(2.8, +(meta.ease + 0.1).toFixed(2));
+      }
       currentCard.level = level;
       currentCard.reviewCount = (currentCard.reviewCount || 0) + 1;
-      currentCard.lastReviewed = Date.now();
+      currentCard.lastReviewed = now;
+      currentCard.streak = nextStreak;
+      currentCard.ease = nextEase;
+      currentCard.intervalDays = nextInterval;
+      currentCard.nextReviewAt = now + Math.round(nextInterval * DAY_MS);
       saveDeck();
       loadNextReviewCard();
     }
@@ -2792,7 +3778,7 @@ export default {
     });
 
     // ==========================================
-    // 9. 鍵盤快捷鍵 (Tab, Space, 1/2/3, R, Alt)
+    // 9. 鍵盤快捷鍵 (Tab, Space, 1-4, R, Alt)
     // ==========================================
     window.addEventListener('keydown', (e) => {
       if (syncModal.classList.contains('active') || listModal.classList.contains('active') || backupModal.classList.contains('active')) return;
@@ -2815,7 +3801,30 @@ export default {
         return;
       }
 
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'TEXTAREA') return;
+      if (activeTag === 'INPUT' && document.activeElement?.type !== 'checkbox') return;
+      if (activeTag === 'INPUT' && document.activeElement?.type === 'checkbox' && e.code === 'Space') return;
+
+      if (e.key.toLowerCase() === 'r') {
+        if (currentCard) {
+          playAudio(currentCard.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentCard.word)));
+        }
+        return;
+      }
+
+      if (reviewMode === 'quiz') {
+        if (!quizAnswered && ['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          submitQuizAnswer(parseInt(e.key, 10) - 1);
+        } else if (quizAnswered && (e.code === 'Space' || e.key === 'Enter')) {
+          e.preventDefault();
+          advanceQuizNext();
+        } else if (!quizAnswered && e.code === 'Space') {
+          e.preventDefault();
+        }
+        return;
+      }
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -2826,13 +3835,10 @@ export default {
         rateFamiliarity(2);
       } else if (isFlipped && e.key === '3') {
         rateFamiliarity(3);
-      } else if (e.key.toLowerCase() === 'r') {
-        if (currentCard) {
-          playAudio(currentCard.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentCard.word)));
-        }
       }
     });
 
+    updateModeSwitchUI();
     updateDeckUI();
     initSyncKey();
     initHintState();
