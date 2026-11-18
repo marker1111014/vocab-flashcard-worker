@@ -1409,13 +1409,69 @@ export default {
       background: rgba(34, 197, 94, 0.15);
       font-weight: 700;
     }
+    .quiz-main-trans-wrap {
+      padding: 9px 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .quiz-main-trans-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .quiz-main-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      min-width: 0;
+      flex: 1;
+    }
+    .quiz-main-label {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .quiz-main-trans {
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: var(--accent);
+      word-break: break-word;
+    }
+    .quiz-main-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .quiz-saved-badge {
+      font-size: 0.71rem;
+      color: #4ade80;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      padding: 1px 6px;
+      white-space: nowrap;
+    }
+    .quiz-main-trans-wrap .edit-trans-box {
+      margin-bottom: 0;
+      max-width: 100%;
+    }
+    .quiz-main-trans-wrap .edit-trans-input {
+      text-align: left;
+    }
     .quiz-def-list {
       border-top: 1px dashed var(--border);
       padding-top: 10px;
     }
     .quiz-def-list .pos-tag,
     .quiz-def-list .meaning-pill {
-      cursor: default;
+      cursor: pointer;
     }
     .quiz-next-btn {
       width: 100%;
@@ -1728,6 +1784,27 @@ export default {
                   </div>
                 </div>
 
+                <!-- 主要解釋檢視與即時修改（會同步寫入複習庫、自訂釋義表與雲端同步資料） -->
+                <div id="quizMainTransWrap" class="quiz-main-trans-wrap">
+                  <div id="quizMainTransRow" class="quiz-main-trans-row">
+                    <div class="quiz-main-left">
+                      <span class="quiz-main-label">主要解釋：</span>
+                      <span id="quizMainTrans" class="quiz-main-trans">翻譯</span>
+                      <span id="quizTransSavedBadge" class="quiz-saved-badge" style="display:none;">✓ 已儲存</span>
+                    </div>
+                    <div class="quiz-main-actions">
+                      <button id="quizEditTransBtn" class="trans-action-btn" type="button" title="自訂此單字主要解釋">✏️ 編輯</button>
+                      <button id="quizResetTransBtn" class="trans-action-btn" type="button" style="display:none;" title="恢復詞典預設解釋">↺</button>
+                      <button id="quizToggleDefsBtn" class="trans-action-btn" type="button" style="display:none;" title="展開或收合全部釋義膠囊以供點選切換">▾ 換釋義</button>
+                    </div>
+                  </div>
+                  <div id="quizEditTransBox" class="edit-trans-box" style="display:none;">
+                    <input type="text" id="quizEditTransInput" class="edit-trans-input" placeholder="輸入自訂主要解釋...">
+                    <button id="quizSaveTransBtn" class="edit-trans-btn save" type="button">✓</button>
+                    <button id="quizCancelTransBtn" class="edit-trans-btn cancel" type="button">✕</button>
+                  </div>
+                </div>
+
                 <div id="quizDefList" class="quiz-def-list def-list" style="display:none;"></div>
 
                 <button id="quizNextBtn" class="quiz-next-btn" type="button">下一題 ➔ (Space / Enter)</button>
@@ -1952,11 +2029,34 @@ export default {
       return (meaning || '').trim();
     }
 
-    let deck = loadDeck();
-    let currentCard = null;
-    let isFlipped = false;
-    let recentHistory = [];
-    let currentSearchData = null;
+    function syncCustomMapFromDeck(list) {
+      if (!Array.isArray(list)) return false;
+      const customMap = loadCustomTranslations();
+      let customChanged = false;
+      let deckChanged = false;
+      list.forEach(card => {
+        if (!card || !card.word) return;
+        const key = card.word.trim().toLowerCase();
+        const hasExplicitEdit = Boolean(card.isCustomTranslation || (typeof card.translationUpdatedAt === 'number' && card.translationUpdatedAt > 0));
+        if (card.isResetDefault && !card.isCustomTranslation) {
+          if (customMap[key]) {
+            delete customMap[key];
+            customChanged = true;
+          }
+        } else if (hasExplicitEdit) {
+          if (card.translation && customMap[key] !== card.translation) {
+            customMap[key] = card.translation;
+            customChanged = true;
+          }
+        } else if (customMap[key] && customMap[key] !== card.translation) {
+          card.translation = customMap[key];
+          card.isCustomTranslation = true;
+          deckChanged = true;
+        }
+      });
+      if (customChanged) saveCustomTranslations(customMap);
+      return deckChanged;
+    }
 
     let reviewMode = 'flip';
     let quizAutoNext = true;
@@ -1972,6 +2072,14 @@ export default {
     let lastQuizChosenIdx = -1;
     let lastQuizVerdict = null;
     let quizAutoNextTimer = null;
+    let quizDefsExpanded = false;
+    let quizSavedToastTimer = null;
+
+    let deck = loadDeck();
+    let currentCard = null;
+    let isFlipped = false;
+    let recentHistory = [];
+    let currentSearchData = null;
 
     function loadDeck() {
       try {
@@ -1982,6 +2090,10 @@ export default {
           if (card.translation) {
             const t = stripPosSuffix(toTraditionalClient(card.translation));
             if (t !== card.translation) { card.translation = t; updated = true; }
+          }
+          if (card.defaultTranslation) {
+            const dt = stripPosSuffix(toTraditionalClient(card.defaultTranslation));
+            if (dt !== card.defaultTranslation) { card.defaultTranslation = dt; updated = true; }
           }
           if (Array.isArray(card.definitions)) {
             card.definitions.forEach(d => {
@@ -1999,6 +2111,9 @@ export default {
             });
           }
         });
+        if (syncCustomMapFromDeck(list)) {
+          updated = true;
+        }
         if (updated) {
           try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
         }
@@ -2080,6 +2195,16 @@ export default {
     const quizVerdictTitle = document.getElementById('quizVerdictTitle');
     const quizVerdictTransition = document.getElementById('quizVerdictTransition');
     const quizVerdictSub = document.getElementById('quizVerdictSub');
+    const quizMainTransRow = document.getElementById('quizMainTransRow');
+    const quizMainTrans = document.getElementById('quizMainTrans');
+    const quizTransSavedBadge = document.getElementById('quizTransSavedBadge');
+    const quizEditTransBtn = document.getElementById('quizEditTransBtn');
+    const quizResetTransBtn = document.getElementById('quizResetTransBtn');
+    const quizToggleDefsBtn = document.getElementById('quizToggleDefsBtn');
+    const quizEditTransBox = document.getElementById('quizEditTransBox');
+    const quizEditTransInput = document.getElementById('quizEditTransInput');
+    const quizSaveTransBtn = document.getElementById('quizSaveTransBtn');
+    const quizCancelTransBtn = document.getElementById('quizCancelTransBtn');
     const quizDefList = document.getElementById('quizDefList');
     const quizNextBtn = document.getElementById('quizNextBtn');
     const quizOvBtns = document.querySelectorAll('.quiz-ov-btn');
@@ -2209,9 +2334,15 @@ export default {
         }
       } else {
         const chosenTrans = (mainTrans.innerText || '').trim() || currentSearchData.translation || '';
+        const defaultTrans = stripPosSuffix(toTraditionalClient(currentSearchData.translation || ''));
+        const isCustom = Boolean(defaultTrans && chosenTrans !== defaultTrans);
         const newCard = {
           word: currentSearchData.word,
           translation: chosenTrans,
+          defaultTranslation: defaultTrans,
+          isCustomTranslation: isCustom,
+          isResetDefault: false,
+          translationUpdatedAt: isCustom ? Date.now() : 0,
           definitions: currentSearchData.definitions || [],
           audioUrl: currentSearchData.audioUrl || '',
           level: 1,
@@ -2268,64 +2399,119 @@ export default {
       });
     }
 
-    function applyChosenTranslation(newTrans) {
-      if (!currentSearchData) return;
-      const word = currentSearchData.word;
+    function getCardDefaultTranslation(card) {
+      if (!card) return '';
+      if (card.defaultTranslation) {
+        return stripPosSuffix(toTraditionalClient(card.defaultTranslation));
+      }
+      if (currentSearchData && currentSearchData.word && currentSearchData.word.toLowerCase() === card.word.toLowerCase() && currentSearchData.translation) {
+        return stripPosSuffix(toTraditionalClient(currentSearchData.translation));
+      }
+      if (Array.isArray(card.definitions) && card.definitions.length > 0 && Array.isArray(card.definitions[0].meanings) && card.definitions[0].meanings.length > 0) {
+        return card.definitions[0].meanings.slice(0, 2).map(m => toTraditionalClient(m)).join('、').trim();
+      }
+      return '';
+    }
+
+    function showQuizSavedBadge(text) {
+      if (!quizTransSavedBadge) return;
+      quizTransSavedBadge.innerText = text || '✓ 已持久化儲存';
+      quizTransSavedBadge.style.display = 'inline-block';
+      if (quizSavedToastTimer) clearTimeout(quizSavedToastTimer);
+      quizSavedToastTimer = setTimeout(() => {
+        quizTransSavedBadge.style.display = 'none';
+      }, 2200);
+    }
+
+    function syncCardPrimaryTranslation(word, newTrans, opts) {
+      if (!word) return;
       const cleanTrans = toTraditionalClient((newTrans || '').trim());
       if (!cleanTrans) return;
 
-      const defTrans = toTraditionalClient(currentSearchData.translation || '');
-      if (cleanTrans !== defTrans) {
-        setCustomTranslation(word, cleanTrans);
-        resetTransBtn.style.display = 'inline-block';
-      } else {
-        setCustomTranslation(word, null);
-        resetTransBtn.style.display = 'none';
-      }
+      const options = opts || {};
+      const key = word.trim().toLowerCase();
+      const now = Date.now();
+      const matchedCards = deck.filter(item => item && item.word && item.word.toLowerCase() === key);
+      const firstCard = matchedCards[0] || (currentCard && currentCard.word.toLowerCase() === key ? currentCard : null);
 
-      mainTrans.innerText = cleanTrans;
-      currentSearchData.customTranslation = cleanTrans;
+      const searchDefTrans = (currentSearchData && currentSearchData.word && currentSearchData.word.toLowerCase() === key)
+        ? stripPosSuffix(toTraditionalClient(currentSearchData.translation || ''))
+        : '';
+      const preEditFallback = (firstCard && !firstCard.isCustomTranslation && firstCard.translation)
+        ? stripPosSuffix(toTraditionalClient(firstCard.translation))
+        : '';
+      const defHint = searchDefTrans || getCardDefaultTranslation(firstCard) || preEditFallback;
+      const isDefaultMatch = Boolean(options.isReset || (defHint && cleanTrans === defHint));
 
-      updateDefPillsHighlight(cleanTrans, defList);
+      setCustomTranslation(word, isDefaultMatch ? null : cleanTrans);
 
-      const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
-      if (deckIdx >= 0) {
-        deck[deckIdx].translation = cleanTrans;
-        if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
-          currentCard.translation = cleanTrans;
-          if (reviewMode === 'quiz' && !quizAnswered) {
-            prepareQuizQuestionForCard(currentCard);
-          }
-          reviewMainTrans.innerText = cleanTrans;
-          updateDefPillsHighlight(cleanTrans, reviewDefList);
+      if (currentSearchData && currentSearchData.word && currentSearchData.word.toLowerCase() === key) {
+        mainTrans.innerText = cleanTrans;
+        if (isDefaultMatch) {
+          delete currentSearchData.customTranslation;
+        } else {
+          currentSearchData.customTranslation = cleanTrans;
         }
-        saveDeck();
+        resetTransBtn.style.display = (!isDefaultMatch && searchDefTrans && cleanTrans !== searchDefTrans) ? 'inline-block' : 'none';
+        updateDefPillsHighlight(cleanTrans, defList);
       }
+
+      let deckUpdated = false;
+      matchedCards.forEach(c => {
+        c.translation = cleanTrans;
+        c.translationUpdatedAt = now;
+        c.isCustomTranslation = !isDefaultMatch;
+        c.isResetDefault = Boolean(options.isReset);
+        if (!c.defaultTranslation && defHint) {
+          c.defaultTranslation = defHint;
+        }
+        deckUpdated = true;
+      });
+
+      if (currentCard && currentCard.word.toLowerCase() === key) {
+        currentCard.translation = cleanTrans;
+        currentCard.translationUpdatedAt = now;
+        currentCard.isCustomTranslation = !isDefaultMatch;
+        currentCard.isResetDefault = Boolean(options.isReset);
+        if (!currentCard.defaultTranslation && defHint) {
+          currentCard.defaultTranslation = defHint;
+        }
+        reviewMainTrans.innerText = cleanTrans;
+        updateDefPillsHighlight(cleanTrans, reviewDefList);
+        if (quizMainTrans) quizMainTrans.innerText = cleanTrans;
+        updateDefPillsHighlight(cleanTrans, quizDefList);
+
+        if (reviewMode === 'quiz') {
+          if (!quizAnswered) {
+            prepareQuizQuestionForCard(currentCard);
+          } else if (Array.isArray(quizCurrentOptions)) {
+            quizCurrentOptions.forEach(opt => {
+              if (opt.isCorrect) opt.text = cleanTrans;
+            });
+          }
+        }
+      }
+
+      if (deckUpdated) {
+        saveDeck();
+      } else if (reviewMode === 'quiz' && currentCard && currentCard.word.toLowerCase() === key) {
+        renderQuizUI();
+      }
+
+      if (options.showQuizToast) {
+        showQuizSavedBadge(options.isReset ? '已還原預設並儲存' : '✓ 已更新並持久化儲存');
+      }
+    }
+
+    function applyChosenTranslation(newTrans) {
+      if (!currentSearchData) return;
+      syncCardPrimaryTranslation(currentSearchData.word, newTrans, { isReset: false });
     }
 
     function resetChosenTranslation() {
       if (!currentSearchData) return;
-      const word = currentSearchData.word;
-      setCustomTranslation(word, null);
       const defTrans = toTraditionalClient(currentSearchData.translation || '釋義');
-      mainTrans.innerText = defTrans;
-      delete currentSearchData.customTranslation;
-      resetTransBtn.style.display = 'none';
-      updateDefPillsHighlight(defTrans, defList);
-
-      const deckIdx = deck.findIndex(item => item.word.toLowerCase() === word.toLowerCase());
-      if (deckIdx >= 0) {
-        deck[deckIdx].translation = defTrans;
-        if (currentCard && currentCard.word.toLowerCase() === word.toLowerCase()) {
-          currentCard.translation = defTrans;
-          if (reviewMode === 'quiz' && !quizAnswered) {
-            prepareQuizQuestionForCard(currentCard);
-          }
-          reviewMainTrans.innerText = defTrans;
-          updateDefPillsHighlight(defTrans, reviewDefList);
-        }
-        saveDeck();
-      }
+      syncCardPrimaryTranslation(currentSearchData.word, defTrans, { isReset: true });
     }
 
     function closeInlineEdit() {
@@ -2378,20 +2564,7 @@ export default {
     reviewSaveTransBtn.addEventListener('click', () => {
       const val = reviewEditTransInput.value.trim();
       if (val && currentCard) {
-        const cleanT = toTraditionalClient(val);
-        currentCard.translation = cleanT;
-        setCustomTranslation(currentCard.word, cleanT);
-        if (reviewMode === 'quiz' && !quizAnswered) {
-          prepareQuizQuestionForCard(currentCard);
-        }
-        saveDeck();
-        reviewMainTrans.innerText = cleanT;
-        updateDefPillsHighlight(cleanT, reviewDefList);
-        if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
-          mainTrans.innerText = cleanT;
-          resetTransBtn.style.display = (cleanT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
-          updateDefPillsHighlight(cleanT, defList);
-        }
+        syncCardPrimaryTranslation(currentCard.word, val, { isReset: false });
       }
       closeReviewInlineEdit();
     });
@@ -2404,6 +2577,68 @@ export default {
       } else if (e.key === 'Escape') {
         e.preventDefault();
         closeReviewInlineEdit();
+      }
+    });
+
+    function pauseQuizAutoNext() {
+      clearQuizAutoNextTimer();
+      if (quizAnswered && quizNextBtn) {
+        quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+      }
+    }
+
+    function closeQuizInlineEdit() {
+      if (quizEditTransBox) quizEditTransBox.style.display = 'none';
+      if (quizMainTransRow) quizMainTransRow.style.display = 'flex';
+    }
+
+    quizEditTransBtn.addEventListener('click', () => {
+      if (!currentCard) return;
+      pauseQuizAutoNext();
+      quizMainTransRow.style.display = 'none';
+      quizEditTransBox.style.display = 'flex';
+      quizEditTransInput.value = getCleanCardTranslation(currentCard) || (quizMainTrans ? quizMainTrans.innerText.trim() : '');
+      quizEditTransInput.focus();
+      quizEditTransInput.select();
+    });
+
+    quizSaveTransBtn.addEventListener('click', () => {
+      const val = quizEditTransInput.value.trim();
+      if (val && currentCard) {
+        pauseQuizAutoNext();
+        syncCardPrimaryTranslation(currentCard.word, val, { isReset: false, showQuizToast: true });
+      }
+      closeQuizInlineEdit();
+    });
+
+    quizCancelTransBtn.addEventListener('click', closeQuizInlineEdit);
+
+    quizResetTransBtn.addEventListener('click', () => {
+      if (!currentCard) return;
+      const defT = getCardDefaultTranslation(currentCard);
+      if (defT) {
+        pauseQuizAutoNext();
+        syncCardPrimaryTranslation(currentCard.word, defT, { isReset: true, showQuizToast: true });
+      }
+      closeQuizInlineEdit();
+    });
+
+    quizToggleDefsBtn.addEventListener('click', () => {
+      if (!currentCard) return;
+      pauseQuizAutoNext();
+      quizDefsExpanded = !quizDefsExpanded;
+      renderQuizUI();
+    });
+
+    quizEditTransInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        quizSaveTransBtn.click();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeQuizInlineEdit();
       }
     });
 
@@ -2883,8 +3118,11 @@ export default {
     function prepareQuizQuestionForCard(card) {
       clearQuizAutoNextTimer();
       quizAnswered = false;
+      quizDefsExpanded = false;
       lastQuizChosenIdx = -1;
       lastQuizVerdict = null;
+      closeQuizInlineEdit();
+      if (quizTransSavedBadge) quizTransSavedBadge.style.display = 'none';
       quizActiveWord = card ? card.word.toLowerCase() : null;
       quizCurrentOptions = card ? buildQuizOptions(card) : [];
       quizQuestionStartAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -3072,16 +3310,17 @@ export default {
       currentCard.lastResponseMs = responseMs;
 
       quizAnswered = true;
+      quizDefsExpanded = !chosen.isCorrect;
       lastQuizChosenIdx = optIdx;
       lastQuizVerdict = verdict;
-
-      saveDeck();
 
       if (chosen.isCorrect && quizAutoNext) {
         quizAutoNextTimer = setTimeout(() => {
           advanceQuizNext();
         }, 1600);
       }
+
+      saveDeck();
     }
 
     function advanceQuizNext() {
@@ -3095,13 +3334,21 @@ export default {
         quizDefList.style.display = 'none';
         return;
       }
-      const curTrans = toTraditionalClient(card.translation || '');
+      const curTrans = getCleanCardTranslation(card);
       card.definitions.forEach(d => {
         const row = document.createElement('div');
         row.className = 'def-row';
         const pos = document.createElement('span');
         pos.className = 'pos-tag';
         pos.innerText = toTraditionalClient(d.pos || '');
+        pos.title = '點擊設為此詞性主要解釋（會持久儲存）';
+        pos.addEventListener('click', () => {
+          const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join('、');
+          if (combined) {
+            pauseQuizAutoNext();
+            syncCardPrimaryTranslation(card.word, formatChosenMeaning(combined), { isReset: false, showQuizToast: true });
+          }
+        });
         row.appendChild(pos);
 
         const wrap = document.createElement('div');
@@ -3109,7 +3356,27 @@ export default {
         (d.meanings || []).forEach(m => {
           const pill = document.createElement('span');
           pill.className = 'meaning-pill';
-          pill.innerText = toTraditionalClient(m);
+          const mText = toTraditionalClient(m);
+          pill.innerText = mText;
+          pill.title = '點擊設為主要解釋：' + formatChosenMeaning(mText) + '（按住 Ctrl/Shift 可複選）';
+          pill.addEventListener('click', (e) => {
+            pauseQuizAutoNext();
+            if (e.ctrlKey || e.shiftKey) {
+              const cur = getCleanCardTranslation(card);
+              const parts = cur.split(/[、;；,，]+/).map(p => p.trim()).filter(Boolean);
+              let newParts = [];
+              if (parts.includes(mText)) {
+                newParts = parts.filter(p => p !== mText);
+              } else {
+                newParts = parts.concat([mText]);
+              }
+              if (newParts.length > 0) {
+                syncCardPrimaryTranslation(card.word, formatChosenMeaning(newParts.join('、')), { isReset: false, showQuizToast: true });
+                return;
+              }
+            }
+            syncCardPrimaryTranslation(card.word, formatChosenMeaning(mText), { isReset: false, showQuizToast: true });
+          });
           wrap.appendChild(pill);
         });
         row.appendChild(wrap);
@@ -3188,13 +3455,31 @@ export default {
           else btn.classList.remove('active');
         });
 
-        if (!v.isCorrect) {
+        closeQuizInlineEdit();
+        const curCleanTrans = getCleanCardTranslation(currentCard) || '無翻譯';
+        if (quizMainTrans) quizMainTrans.innerText = curCleanTrans;
+        const defTrans = getCardDefaultTranslation(currentCard);
+        if (quizResetTransBtn) {
+          quizResetTransBtn.style.display = (defTrans && curCleanTrans !== defTrans) ? 'inline-block' : 'none';
+        }
+
+        const hasDefs = Array.isArray(currentCard.definitions) && currentCard.definitions.length > 0;
+        if (quizToggleDefsBtn) {
+          if (hasDefs) {
+            quizToggleDefsBtn.style.display = 'inline-block';
+            quizToggleDefsBtn.innerText = quizDefsExpanded ? '▴ 收合釋義' : '▾ 換釋義';
+          } else {
+            quizToggleDefsBtn.style.display = 'none';
+          }
+        }
+
+        if (hasDefs && quizDefsExpanded) {
           renderQuizDefsForReview(currentCard);
         } else {
           quizDefList.style.display = 'none';
         }
 
-        if (v.isCorrect && quizAutoNext && !v.manualOverride) {
+        if (v.isCorrect && quizAutoNext && quizAutoNextTimer && !v.manualOverride) {
           quizNextBtn.innerText = '下一題 ➔ (1.6 秒後自動切換 · Space)';
         } else {
           quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
@@ -3202,6 +3487,7 @@ export default {
 
         quizFeedbackWrap.style.display = 'flex';
       } else {
+        closeQuizInlineEdit();
         quizFeedbackWrap.style.display = 'none';
         quizDefList.style.display = 'none';
       }
@@ -3223,7 +3509,7 @@ export default {
 
     function setReviewMode(mode) {
       const target = mode === 'quiz' ? 'quiz' : 'flip';
-      if (reviewMode === target && ((target === 'flip') || quizActiveWord)) {
+      if (reviewMode === target && ((target === 'flip') || (quizActiveWord && (!currentCard || quizActiveWord === currentCard.word.toLowerCase())))) {
         updateModeSwitchUI();
         return;
       }
@@ -3383,7 +3669,7 @@ export default {
         document.getElementById('flipBtnWrap').style.display = 'block';
       } else {
         closeReviewInlineEdit();
-        const curTrans = toTraditionalClient(currentCard.translation || '無翻譯');
+        const curTrans = getCleanCardTranslation(currentCard) || '無翻譯';
         reviewMainTrans.innerText = curTrans;
         reviewDefList.innerHTML = '';
         if (Array.isArray(currentCard.definitions)) {
@@ -3398,17 +3684,7 @@ export default {
             pos.addEventListener('click', () => {
               const combined = (d.meanings || []).slice(0, 2).map(m => toTraditionalClient(m)).join('、');
               if (combined) {
-                const newT = formatChosenMeaning(combined);
-                currentCard.translation = newT;
-                setCustomTranslation(currentCard.word, newT);
-                saveDeck();
-                reviewMainTrans.innerText = newT;
-                updateDefPillsHighlight(newT, reviewDefList);
-                if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
-                  mainTrans.innerText = newT;
-                  resetTransBtn.style.display = (newT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
-                  updateDefPillsHighlight(newT, defList);
-                }
+                syncCardPrimaryTranslation(currentCard.word, formatChosenMeaning(combined), { isReset: false });
               }
             });
             row.appendChild(pos);
@@ -3421,18 +3697,22 @@ export default {
               const mText = toTraditionalClient(m);
               pill.innerText = mText;
               pill.title = '點擊設為卡片釋義：' + formatChosenMeaning(mText);
-              pill.addEventListener('click', () => {
-                const newT = formatChosenMeaning(mText);
-                currentCard.translation = newT;
-                setCustomTranslation(currentCard.word, newT);
-                saveDeck();
-                reviewMainTrans.innerText = newT;
-                updateDefPillsHighlight(newT, reviewDefList);
-                if (currentSearchData && currentSearchData.word.toLowerCase() === currentCard.word.toLowerCase()) {
-                  mainTrans.innerText = newT;
-                  resetTransBtn.style.display = (newT !== toTraditionalClient(currentSearchData.translation || '')) ? 'inline-block' : 'none';
-                  updateDefPillsHighlight(newT, defList);
+              pill.addEventListener('click', (e) => {
+                if (e.ctrlKey || e.shiftKey) {
+                  const cur = getCleanCardTranslation(currentCard);
+                  const parts = cur.split(/[、;；,，]+/).map(p => p.trim()).filter(Boolean);
+                  let newParts = [];
+                  if (parts.includes(mText)) {
+                    newParts = parts.filter(p => p !== mText);
+                  } else {
+                    newParts = parts.concat([mText]);
+                  }
+                  if (newParts.length > 0) {
+                    syncCardPrimaryTranslation(currentCard.word, formatChosenMeaning(newParts.join('、')), { isReset: false });
+                    return;
+                  }
                 }
+                syncCardPrimaryTranslation(currentCard.word, formatChosenMeaning(mText), { isReset: false });
               });
               wrap.appendChild(pill);
             });
@@ -3533,29 +3813,50 @@ export default {
       syncKeyInput.type = syncKeyInput.type === 'password' ? 'text' : 'password';
     });
 
+    function normalizeSyncCard(raw) {
+      if (!raw || !raw.word) return null;
+      const c = Object.assign({}, raw);
+      if (c.translation) c.translation = stripPosSuffix(toTraditionalClient(c.translation));
+      if (c.defaultTranslation) c.defaultTranslation = stripPosSuffix(toTraditionalClient(c.defaultTranslation));
+      if (Array.isArray(c.definitions)) {
+        c.definitions = c.definitions.map(d => ({
+          pos: d.pos ? toTraditionalClient(d.pos) : '',
+          meanings: Array.isArray(d.meanings) ? d.meanings.map(m => toTraditionalClient(m)) : []
+        }));
+      }
+      if (typeof c.translationUpdatedAt !== 'number') c.translationUpdatedAt = 0;
+      c.isCustomTranslation = Boolean(c.isCustomTranslation);
+      c.isResetDefault = Boolean(c.isResetDefault);
+      return c;
+    }
+
+    function refreshLookupTranslationFromDeck() {
+      if (!currentSearchData || !currentSearchData.word) return;
+      const key = currentSearchData.word.trim().toLowerCase();
+      const custom = getCustomTranslation(currentSearchData.word);
+      const matched = deck.find(c => c && c.word && c.word.toLowerCase() === key);
+      const searchDef = stripPosSuffix(toTraditionalClient(currentSearchData.translation || ''));
+      const chosen = custom || (matched && matched.translation ? getCleanCardTranslation(matched) : '') || searchDef || '釋義';
+      mainTrans.innerText = chosen;
+      if (custom) {
+        currentSearchData.customTranslation = custom;
+      } else {
+        delete currentSearchData.customTranslation;
+      }
+      resetTransBtn.style.display = (searchDef && chosen !== searchDef) ? 'inline-block' : 'none';
+      updateDefPillsHighlight(chosen, defList);
+      updateStarBtnState();
+    }
+
     function mergeDecks(localDeck, remoteDeck) {
       const map = new Map();
-      (remoteDeck || []).forEach(card => {
-        if (card && card.word) {
-          if (card.translation) card.translation = stripPosSuffix(toTraditionalClient(card.translation));
-          if (Array.isArray(card.definitions)) {
-            card.definitions.forEach(d => {
-              if (d.pos) d.pos = toTraditionalClient(d.pos);
-              if (Array.isArray(d.meanings)) d.meanings = d.meanings.map(m => toTraditionalClient(m));
-            });
-          }
-          map.set(card.word.toLowerCase(), card);
-        }
+      (remoteDeck || []).forEach(raw => {
+        const card = normalizeSyncCard(raw);
+        if (card) map.set(card.word.toLowerCase(), card);
       });
-      (localDeck || []).forEach(card => {
-        if (!card || !card.word) return;
-        if (card.translation) card.translation = stripPosSuffix(toTraditionalClient(card.translation));
-        if (Array.isArray(card.definitions)) {
-          card.definitions.forEach(d => {
-            if (d.pos) d.pos = toTraditionalClient(d.pos);
-            if (Array.isArray(d.meanings)) d.meanings = d.meanings.map(m => toTraditionalClient(m));
-          });
-        }
+      (localDeck || []).forEach(raw => {
+        const card = normalizeSyncCard(raw);
+        if (!card) return;
         const key = card.word.toLowerCase();
         const existing = map.get(key);
         if (!existing) {
@@ -3565,10 +3866,38 @@ export default {
           const localTime = card.lastReviewed || 0;
           const remoteCount = existing.reviewCount || 0;
           const localCount = card.reviewCount || 0;
+          const localWinsProgress = localTime > remoteTime || (localTime === remoteTime && localCount >= remoteCount);
 
-          if (localTime > remoteTime || (localTime === remoteTime && localCount >= remoteCount)) {
-            map.set(key, card);
+          const winner = Object.assign({}, localWinsProgress ? card : existing);
+          const loser = localWinsProgress ? existing : card;
+
+          // 獨立比對「主要解釋」的更新時間，防止較新的翻譯編輯被較舊的複習進度覆蓋
+          const localTransAt = card.translationUpdatedAt || 0;
+          const remoteTransAt = existing.translationUpdatedAt || 0;
+          let transSource = winner;
+          if (localTransAt > remoteTransAt) {
+            transSource = card;
+          } else if (remoteTransAt > localTransAt) {
+            transSource = existing;
+          } else if (card.isCustomTranslation && !existing.isCustomTranslation) {
+            transSource = card;
+          } else if (existing.isCustomTranslation && !card.isCustomTranslation) {
+            transSource = existing;
           }
+
+          winner.translation = transSource.translation || winner.translation;
+          winner.translationUpdatedAt = Math.max(localTransAt, remoteTransAt);
+          winner.isCustomTranslation = Boolean(transSource.isCustomTranslation);
+          winner.isResetDefault = Boolean(transSource.isResetDefault);
+          winner.defaultTranslation = card.defaultTranslation || existing.defaultTranslation || '';
+          if ((!winner.definitions || winner.definitions.length === 0) && Array.isArray(loser.definitions) && loser.definitions.length > 0) {
+            winner.definitions = loser.definitions;
+          }
+          if (!winner.audioUrl && loser.audioUrl) {
+            winner.audioUrl = loser.audioUrl;
+          }
+
+          map.set(key, winner);
         }
       });
       return Array.from(map.values());
@@ -3618,8 +3947,28 @@ export default {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || '拉取失敗');
 
-        deck = data.deck || [];
+        const pulled = (data.deck || []).map(normalizeSyncCard).filter(Boolean);
+        const customMap = loadCustomTranslations();
+        let customMapDirty = false;
+        pulled.forEach(c => {
+          const k = c.word.trim().toLowerCase();
+          if (c.isCustomTranslation && c.translation) {
+            if (customMap[k] !== c.translation) {
+              customMap[k] = c.translation;
+              customMapDirty = true;
+            }
+          } else if (customMap[k]) {
+            delete customMap[k];
+            customMapDirty = true;
+          }
+        });
+        if (customMapDirty) saveCustomTranslations(customMap);
+
+        deck = pulled;
+        quizActiveWord = null;
+        quizAnswered = false;
         saveDeck();
+        refreshLookupTranslationFromDeck();
         localStorage.setItem(LAST_SYNC_STORAGE, Date.now().toString());
         lastSyncTime.innerText = '剛剛已下載';
         syncLog.style.color = '#34d399';
@@ -3647,6 +3996,7 @@ export default {
 
         const remoteDeck = data.deck || [];
         const merged = mergeDecks(deck, remoteDeck);
+        syncCustomMapFromDeck(merged);
 
         const pushRes = await fetch('/api/sync', {
           method: 'POST',
@@ -3660,7 +4010,10 @@ export default {
         if (!pushRes.ok) throw new Error(pushData.error || '回寫雲端失敗');
 
         deck = merged;
+        quizActiveWord = null;
+        quizAnswered = false;
         saveDeck();
+        refreshLookupTranslationFromDeck();
         localStorage.setItem(LAST_SYNC_STORAGE, Date.now().toString());
         lastSyncTime.innerText = '剛剛已同步';
         syncLog.style.color = '#34d399';
@@ -3751,7 +4104,11 @@ export default {
           const imported = JSON.parse(evt.target.result);
           if (!Array.isArray(imported)) throw new Error('檔案格式錯誤');
           deck = mergeDecks(deck, imported);
+          syncCustomMapFromDeck(deck);
+          quizActiveWord = null;
+          quizAnswered = false;
           saveDeck();
+          refreshLookupTranslationFromDeck();
           alert('成功匯入並合併！目前複習庫共有 ' + deck.length + ' 個單字');
           backupModal.classList.remove('active');
         } catch (err) {
