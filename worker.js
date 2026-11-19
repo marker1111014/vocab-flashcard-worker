@@ -31,111 +31,185 @@ export default {
     const url = new URL(request.url);
 
     // -------------------------------------------------------------
-    // 1. 同源音訊串流代理 (/api/audio?word=...)
+    // 1. 同源音訊串流代理 (/api/audio?word=...) - 平行競速 ＋ Edge 快取最佳化
     // -------------------------------------------------------------
+    const fetchWithTimeout = async (targetUrl, init, timeoutMs) => {
+      const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+      try {
+        const reqInit = Object.assign({}, init || {});
+        if (ctrl) reqInit.signal = ctrl.signal;
+        return await fetch(targetUrl, reqInit);
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    };
+
+    const buildAudioHttpResponse = (buf, rangeHeader) => {
+      const total = buf.byteLength;
+      const baseHeaders = {
+        "Content-Type": "audio/mpeg",
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "public, max-age=604800, s-maxage=604800",
+        "Access-Control-Allow-Origin": "*"
+      };
+      if (rangeHeader) {
+        const m = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+        if (m && total > 0) {
+          const start = Math.min(parseInt(m[1], 10), total - 1);
+          const end = m[2] ? Math.min(parseInt(m[2], 10), total - 1) : total - 1;
+          if (start <= end) {
+            return new Response(buf.slice(start, end + 1), {
+              status: 206,
+              headers: {
+                ...baseHeaders,
+                "Content-Range": "bytes " + start + "-" + end + "/" + total,
+                "Content-Length": String(end - start + 1)
+              }
+            });
+          }
+        }
+      }
+      return new Response(buf, {
+        status: 200,
+        headers: {
+          ...baseHeaders,
+          "Content-Length": String(total)
+        }
+      });
+    };
+
+    const fetchDictAudioBytes = async (rawWord) => {
+      try {
+        const dictRes = await fetchWithTimeout(
+          "https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(rawWord),
+          { headers: { "User-Agent": "Mozilla/5.0" } },
+          750
+        );
+        if (!dictRes || !dictRes.ok) return null;
+        const data = await dictRes.json();
+        const phonetics = data?.[0]?.phonetics || [];
+        const usPhonetic = phonetics.find(p => {
+          if (!p.audio) return false;
+          const a = p.audio.toLowerCase();
+          return a.includes("-us.") || a.includes("_us_") || a.includes("/en-us");
+        });
+        let targetAudioUrl = usPhonetic?.audio || phonetics.find(p => p.audio && p.audio.length > 0)?.audio;
+        if (!targetAudioUrl) return null;
+        if (targetAudioUrl.startsWith("//")) targetAudioUrl = "https:" + targetAudioUrl;
+        const fileRes = await fetchWithTimeout(
+          targetAudioUrl,
+          { headers: { "User-Agent": "Mozilla/5.0" } },
+          850
+        );
+        if (!fileRes || !fileRes.ok || !fileRes.headers.get("content-type")?.includes("audio")) return null;
+        const buf = await fileRes.arrayBuffer();
+        return (buf && buf.byteLength > 200) ? buf : null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const fetchGoogleTtsBytes = async (rawParam, rawWord, isSentence) => {
+      try {
+        let ttsText = isSentence ? rawParam : rawWord;
+        if (ttsText.length > 190) {
+          ttsText = ttsText.slice(0, 190);
+          const lastSpace = ttsText.lastIndexOf(" ");
+          if (lastSpace > 120) ttsText = ttsText.slice(0, lastSpace);
+        }
+        const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=" + encodeURIComponent(ttsText);
+        const ttsRes = await fetchWithTimeout(
+          ttsUrl,
+          {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+              "Referer": "https://translate.google.com/"
+            }
+          },
+          3500
+        );
+        if (!ttsRes || !ttsRes.ok) return null;
+        const buf = await ttsRes.arrayBuffer();
+        return (buf && buf.byteLength > 200) ? buf : null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    const resolveAndCacheWordAudio = async (rawParam, origin, isSentence, cache, ctx) => {
+      const rawWord = rawParam.toLowerCase();
+      const canonicalUrl = origin + "/api/audio?" + (isSentence ? ("type=sentence&word=" + encodeURIComponent(rawParam)) : ("word=" + encodeURIComponent(rawWord)));
+      const cacheKey = new Request(canonicalUrl, { method: "GET" });
+      if (cache) {
+        try {
+          const hit = await cache.match(cacheKey);
+          if (hit) return { response: hit, buffer: null, fromCache: true };
+        } catch (e) {}
+      }
+
+      let audioBuf = null;
+      if (isSentence) {
+        audioBuf = await fetchGoogleTtsBytes(rawParam, rawWord, true);
+      } else {
+        // 單字啟動真人美式發音與 Google TTS 錯峰預備（真人發音逾 650ms 未完成或缺音即刻切換 TTS，避免久候無聲）
+        let dictSettled = false;
+        let ttsPromise = null;
+        const startTts = () => {
+          if (!ttsPromise) ttsPromise = fetchGoogleTtsBytes(rawParam, rawWord, false);
+          return ttsPromise;
+        };
+        const dictPromise = fetchDictAudioBytes(rawWord).then(buf => {
+          dictSettled = true;
+          return buf;
+        });
+        const ttsWarmTimer = setTimeout(() => {
+          if (!dictSettled) startTts();
+        }, 160);
+        const dictDeadline = new Promise(resolve => setTimeout(() => resolve("__TIMEOUT__"), 650));
+        const dictOutcome = await Promise.race([dictPromise, dictDeadline]);
+        clearTimeout(ttsWarmTimer);
+
+        if (dictOutcome && dictOutcome !== "__TIMEOUT__") {
+          audioBuf = dictOutcome;
+        } else {
+          audioBuf = await startTts();
+          if (!audioBuf && dictOutcome === "__TIMEOUT__") {
+            audioBuf = await dictPromise;
+          }
+        }
+      }
+
+      if (!audioBuf) return null;
+
+      const cacheableRes = buildAudioHttpResponse(audioBuf, null);
+      if (cache && ctx && typeof ctx.waitUntil === "function") {
+        try {
+          ctx.waitUntil(cache.put(cacheKey, cacheableRes.clone()));
+        } catch (e) {}
+      }
+      return { response: cacheableRes, buffer: audioBuf, fromCache: false };
+    };
+
     if (url.pathname === "/api/audio") {
       const rawParam = (url.searchParams.get("word") || "").replace(/<[^>]+>/g, "").trim();
       if (!rawParam) return new Response("Missing word", { status: 400 });
 
       const audioType = url.searchParams.get("type") || "";
       const isSentence = audioType === "sentence" || rawParam.includes(" ") || rawParam.length > 35;
-      const rawWord = rawParam.toLowerCase();
-
       const cache = typeof caches !== "undefined" ? caches.default : null;
-      const cacheKey = new Request(url.toString(), request);
-      let cachedAudio = null;
-      if (cache) {
-        try {
-          cachedAudio = await cache.match(cacheKey);
-        } catch (e) {}
-      }
-      if (cachedAudio) return cachedAudio;
 
-      let audioStreamResponse = null;
-
-      // 步驟 A：單字優先抓取 Dictionary API 美式真人錄音檔（例句/片語跳過此步以降低延遲）
-      if (!isSentence) {
-        try {
-          const dictRes = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(rawWord), {
-            headers: { "User-Agent": "Mozilla/5.0" }
-          });
-
-          if (dictRes.ok) {
-            const data = await dictRes.json();
-            const phonetics = data[0]?.phonetics || [];
-            
-            const usPhonetic = phonetics.find(p => {
-              if (!p.audio) return false;
-              const a = p.audio.toLowerCase();
-              return a.includes("-us.") || a.includes("_us_") || a.includes("/en-us");
-            });
-
-            let targetAudioUrl = usPhonetic?.audio || phonetics.find(p => p.audio && p.audio.length > 0)?.audio;
-
-            if (targetAudioUrl) {
-              if (targetAudioUrl.startsWith("//")) targetAudioUrl = "https:" + targetAudioUrl;
-              
-              const fileRes = await fetch(targetAudioUrl, {
-                headers: { "User-Agent": "Mozilla/5.0" }
-              });
-
-              if (fileRes.ok && fileRes.headers.get("content-type")?.includes("audio")) {
-                audioStreamResponse = new Response(fileRes.body, {
-                  status: 200,
-                  headers: {
-                    "Content-Type": "audio/mpeg",
-                    "Cache-Control": "public, max-age=604800, s-maxage=604800",
-                    "Access-Control-Allow-Origin": "*"
-                  }
-                });
-              }
-            }
-          }
-        } catch (e) {}
+      const resolved = await resolveAndCacheWordAudio(rawParam, url.origin, isSentence, cache, ctx);
+      if (!resolved) {
+        return new Response("無可用音訊來源", { status: 404 });
       }
 
-      // 步驟 B：備援 / 例句串流 (Google TTS)
-      if (!audioStreamResponse) {
-        try {
-          let ttsText = isSentence ? rawParam : rawWord;
-          if (ttsText.length > 190) {
-            ttsText = ttsText.slice(0, 190);
-            const lastSpace = ttsText.lastIndexOf(" ");
-            if (lastSpace > 120) ttsText = ttsText.slice(0, lastSpace);
-          }
-          const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-US&q=" + encodeURIComponent(ttsText);
-          const ttsRes = await fetch(ttsUrl, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-              "Referer": "https://translate.google.com/"
-            }
-          });
-
-          if (ttsRes.ok) {
-            audioStreamResponse = new Response(ttsRes.body, {
-              status: 200,
-              headers: {
-                "Content-Type": "audio/mpeg",
-                "Cache-Control": "public, max-age=604800, s-maxage=604800",
-                "Access-Control-Allow-Origin": "*"
-              }
-            });
-          }
-        } catch (e) {
-          return new Response("發音串流取得失敗", { status: 502 });
-        }
+      const rangeHdr = request.headers.get("Range");
+      if (rangeHdr) {
+        const buf = resolved.buffer || await resolved.response.arrayBuffer();
+        return buildAudioHttpResponse(buf, rangeHdr);
       }
-
-      if (audioStreamResponse) {
-        if (cache && ctx && typeof ctx.waitUntil === "function") {
-          try {
-            ctx.waitUntil(cache.put(cacheKey, audioStreamResponse.clone()));
-          } catch (e) {}
-        }
-        return audioStreamResponse;
-      }
-
-      return new Response("無可用音訊來源", { status: 404 });
+      return resolved.response;
     }
 
     // -------------------------------------------------------------
@@ -248,8 +322,9 @@ export default {
         });
       }
 
+      const normLookupWord = rawWord.toLowerCase();
       const cache = typeof caches !== "undefined" ? caches.default : null;
-      const cacheKey = new Request(url.toString(), request);
+      const cacheKey = new Request(url.origin + "/api/pronounce?word=" + encodeURIComponent(normLookupWord), { method: "GET" });
       if (cache) {
         try {
           const cached = await cache.match(cacheKey);
@@ -384,10 +459,10 @@ export default {
 
       const fetchLexicon = async (word) => {
         try {
-          const res = await fetch("https://dict.youdao.com/jsonapi?q=" + encodeURIComponent(word), {
+          const res = await fetchWithTimeout("https://dict.youdao.com/jsonapi?q=" + encodeURIComponent(word), {
             headers: { "User-Agent": "Mozilla/5.0" }
-          });
-          if (!res.ok) return null;
+          }, 3500);
+          if (!res || !res.ok) return null;
           const data = await res.json();
           const examples = extractExamples(data);
           const wordObj = data?.ec?.word?.[0];
@@ -485,10 +560,10 @@ export default {
 
       if (!translation) {
         try {
-          const res = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-TW&dt=t&dt=bd&q=" + encodeURIComponent(rawWord), {
+          const res = await fetchWithTimeout("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-TW&dt=t&dt=bd&q=" + encodeURIComponent(rawWord), {
             headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-          });
-          if (res.ok) {
+          }, 3000);
+          if (res && res.ok) {
             const data = await res.json();
             const parsed = parseGoogleJson(data);
             if (parsed.trans && parsed.trans.toLowerCase() !== rawWord.toLowerCase()) {
@@ -501,10 +576,10 @@ export default {
 
       if (!translation) {
         try {
-          const res = await fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(rawWord) + "&langpair=en|zh-TW", {
+          const res = await fetchWithTimeout("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(rawWord) + "&langpair=en|zh-TW", {
             headers: { "User-Agent": "Mozilla/5.0" }
-          });
-          if (res.ok) {
+          }, 3000);
+          if (res && res.ok) {
             const data = await res.json();
             const tText = data.responseData?.translatedText;
             if (tText && tText.toLowerCase() !== rawWord.toLowerCase()) {
@@ -530,7 +605,7 @@ export default {
           meanings: (d.meanings || []).map(m => toTraditional(m))
         })),
         examples: examples,
-        audioUrl: "/api/audio?word=" + encodeURIComponent(rawWord)
+        audioUrl: "/api/audio?word=" + encodeURIComponent(normLookupWord)
       };
 
       const response = new Response(JSON.stringify(result), {
@@ -544,6 +619,9 @@ export default {
       if (translation && cache && ctx && typeof ctx.waitUntil === "function") {
         try {
           ctx.waitUntil(cache.put(cacheKey, response.clone()));
+          if (!rawWord.includes(" ") && rawWord.length <= 35) {
+            ctx.waitUntil(resolveAndCacheWordAudio(rawWord, url.origin, false, cache, ctx).catch(() => null));
+          }
         } catch (e) {}
       }
 
@@ -1230,6 +1308,12 @@ export default {
       border-top: 1px dashed var(--border);
       padding-top: 10px;
     }
+    .quiz-toggles {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .quiz-auto-label {
       display: inline-flex;
       align-items: center;
@@ -1761,10 +1845,16 @@ export default {
             <div id="quizModeBody" class="quiz-mode-body" style="display:none;">
               <div class="quiz-subbar">
                 <span>選擇最貼切的中文釋義（鍵盤 <kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">1</kbd>-<kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">4</kbd>）</span>
-                <label class="quiz-auto-label" title="答對後約 1.6 秒自動切換下一題">
-                  <input type="checkbox" id="quizAutoNextChk" checked>
-                  <span>⚡ 答對自動下一題</span>
-                </label>
+                <div class="quiz-toggles">
+                  <label class="quiz-auto-label" title="切換至下一個單字時自動播放發音">
+                    <input type="checkbox" id="quizAutoPlayChk" checked>
+                    <span>🔊 換題自動發音</span>
+                  </label>
+                  <label class="quiz-auto-label" title="答對後約 1.6 秒自動切換下一題">
+                    <input type="checkbox" id="quizAutoNextChk" checked>
+                    <span>⚡ 答對自動下一題</span>
+                  </label>
+                </div>
               </div>
 
               <div id="quizOptionsGrid" class="quiz-options"></div>
@@ -1941,6 +2031,7 @@ export default {
     const CUSTOM_TRANS_STORAGE = 'deck_custom_trans_v1';
     const REVIEW_MODE_STORAGE = 'deck_review_mode_v1';
     const QUIZ_AUTONEXT_STORAGE = 'deck_quiz_autonext_v1';
+    const QUIZ_AUTOPLAY_STORAGE = 'deck_quiz_autoplay_v1';
     const DAY_MS = 86400000;
 
     const QUIZ_FALLBACK_DISTRACTORS = [
@@ -2060,9 +2151,11 @@ export default {
 
     let reviewMode = 'flip';
     let quizAutoNext = true;
+    let quizAutoPlay = true;
     try {
       if (localStorage.getItem(REVIEW_MODE_STORAGE) === 'quiz') reviewMode = 'quiz';
       if (localStorage.getItem(QUIZ_AUTONEXT_STORAGE) === 'false') quizAutoNext = false;
+      if (localStorage.getItem(QUIZ_AUTOPLAY_STORAGE) === 'false') quizAutoPlay = false;
     } catch (e) {}
 
     let quizQuestionStartAt = 0;
@@ -2074,6 +2167,8 @@ export default {
     let quizAutoNextTimer = null;
     let quizDefsExpanded = false;
     let quizSavedToastTimer = null;
+    let queuedNextCard = null;
+    let quizWarmupTimer = null;
 
     let deck = loadDeck();
     let currentCard = null;
@@ -2188,6 +2283,7 @@ export default {
     const rateMedBtn = document.getElementById('rateMedBtn');
     const rateEasyBtn = document.getElementById('rateEasyBtn');
     const quizModeBody = document.getElementById('quizModeBody');
+    const quizAutoPlayChk = document.getElementById('quizAutoPlayChk');
     const quizAutoNextChk = document.getElementById('quizAutoNextChk');
     const quizOptionsGrid = document.getElementById('quizOptionsGrid');
     const quizFeedbackWrap = document.getElementById('quizFeedbackWrap');
@@ -2243,6 +2339,10 @@ export default {
     const clearAllBtn = document.getElementById('clearAllBtn');
 
     let audioPlayer = new Audio();
+    const AUDIO_BLOB_CACHE = new Map();
+    const AUDIO_INFLIGHT = new Map();
+    let playRequestSeq = 0;
+    let searchRequestSeq = 0;
     let dPressCount = 0;
     let dTimer = null;
 
@@ -2326,6 +2426,7 @@ export default {
       const existingIdx = deck.findIndex(item => item.word.toLowerCase() === targetWord.toLowerCase());
 
       if (existingIdx >= 0) {
+        if (queuedNextCard && queuedNextCard.word.toLowerCase() === targetWord.toLowerCase()) queuedNextCard = null;
         deck.splice(existingIdx, 1);
         saveDeck();
         updateStarBtnState();
@@ -2344,7 +2445,7 @@ export default {
           isResetDefault: false,
           translationUpdatedAt: isCustom ? Date.now() : 0,
           definitions: currentSearchData.definitions || [],
-          audioUrl: currentSearchData.audioUrl || '',
+          audioUrl: normalizeAudioUrl(currentSearchData.audioUrl || ''),
           level: 1,
           reviewCount: 0,
           lastReviewed: 0,
@@ -2834,6 +2935,11 @@ export default {
 
     async function handleSearch(word) {
       if (!word) return;
+      const mySearchSeq = ++searchRequestSeq;
+      const cleanQuery = word.trim();
+      if (cleanQuery.length > 0 && cleanQuery.length <= 45 && /^[a-zA-Z0-9\s'-]+$/.test(cleanQuery)) {
+        prefetchAudio('/api/audio?word=' + encodeURIComponent(cleanQuery.toLowerCase()));
+      }
 
       status.style.display = "block";
       status.className = "status";
@@ -2846,7 +2952,9 @@ export default {
 
       try {
         const res = await fetch("/api/pronounce?word=" + encodeURIComponent(word));
+        if (mySearchSeq !== searchRequestSeq) return;
         const data = await res.json();
+        if (mySearchSeq !== searchRequestSeq) return;
 
         if (!res.ok && !data.word) {
           status.innerText = data.error || "查無此單字";
@@ -2930,9 +3038,10 @@ export default {
         playBtn.style.display = "inline-block";
         renderExamples(data.examples, data.word || word);
 
-        playAudio(data.audioUrl || ("/api/audio?word=" + encodeURIComponent(data.word || word)));
+        playAudio(data.audioUrl || ("/api/audio?word=" + encodeURIComponent((data.word || word).toLowerCase())));
 
       } catch (err) {
+        if (mySearchSeq !== searchRequestSeq) return;
         status.style.display = "block";
         status.innerText = "查詢失敗，請檢查網路連線";
         status.className = "status error";
@@ -2941,23 +3050,130 @@ export default {
 
     playBtn.addEventListener('click', () => {
       if (currentSearchData) {
-        playAudio(currentSearchData.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentSearchData.word)));
+        playAudio(currentSearchData.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentSearchData.word.toLowerCase())));
       }
     });
 
-    function playAudio(url, onEnded) {
+    function normalizeAudioUrl(url) {
+      if (!url) return '';
+      if (url.startsWith('/api/audio?word=')) {
+        try {
+          const q = decodeURIComponent(url.slice('/api/audio?word='.length));
+          if (q && !q.includes('&') && !q.includes(' ')) {
+            return '/api/audio?word=' + encodeURIComponent(q.trim().toLowerCase());
+          }
+        } catch (e) {}
+      }
+      return url;
+    }
+
+    function getCardAudioUrl(card) {
+      if (!card || !card.word) return '';
+      if (card.audioUrl) return normalizeAudioUrl(card.audioUrl);
+      return '/api/audio?word=' + encodeURIComponent(card.word.trim().toLowerCase());
+    }
+
+    function prefetchAudio(rawUrl) {
+      const url = normalizeAudioUrl(rawUrl);
+      if (!url || typeof fetch !== 'function') return Promise.resolve(null);
+      if (AUDIO_BLOB_CACHE.has(url)) {
+        const hit = AUDIO_BLOB_CACHE.get(url);
+        AUDIO_BLOB_CACHE.delete(url);
+        AUDIO_BLOB_CACHE.set(url, hit);
+        return Promise.resolve(hit);
+      }
+      if (AUDIO_INFLIGHT.has(url)) return AUDIO_INFLIGHT.get(url);
+      if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+        return Promise.resolve(null);
+      }
+      const p = fetch(url).then(async res => {
+        if (!res || !res.ok || typeof res.blob !== 'function') return null;
+        const blob = await res.blob();
+        if (!blob || !blob.size) return null;
+        const objUrl = URL.createObjectURL(blob);
+        if (!objUrl) return null;
+        if (AUDIO_BLOB_CACHE.size >= 150) {
+          const oldestKey = AUDIO_BLOB_CACHE.keys().next().value;
+          const oldestVal = AUDIO_BLOB_CACHE.get(oldestKey);
+          AUDIO_BLOB_CACHE.delete(oldestKey);
+          try {
+            if (oldestVal && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(oldestVal);
+          } catch (e) {}
+        }
+        AUDIO_BLOB_CACHE.set(url, objUrl);
+        return objUrl;
+      }).catch(() => null).finally(() => {
+        AUDIO_INFLIGHT.delete(url);
+      });
+      AUDIO_INFLIGHT.set(url, p);
+      return p;
+    }
+
+    function prefetchUpcomingQuizAudio(excludeCard) {
+      if (quizWarmupTimer) {
+        clearTimeout(quizWarmupTimer);
+        quizWarmupTimer = null;
+      }
+      if (reviewMode !== 'quiz' || !Array.isArray(deck) || deck.length === 0) return;
+      quizWarmupTimer = setTimeout(() => {
+        quizWarmupTimer = null;
+        if (reviewMode !== 'quiz' || !Array.isArray(deck) || deck.length === 0) return;
+        const exWord = excludeCard && excludeCard.word ? excludeCard.word.toLowerCase() : '';
+        const list = [];
+        if (queuedNextCard && isWordInDeck(queuedNextCard.word)) list.push(queuedNextCard);
+        for (let i = 0; i < deck.length && list.length < 3; i++) {
+          const c = deck[i];
+          if (!c || !c.word) continue;
+          const wLow = c.word.toLowerCase();
+          if (wLow === exWord || list.some(x => x.word.toLowerCase() === wLow)) continue;
+          const u = getCardAudioUrl(c);
+          if (u && !AUDIO_BLOB_CACHE.has(u) && !AUDIO_INFLIGHT.has(u)) {
+            list.push(c);
+          }
+        }
+        list.slice(0, 3).forEach(c => prefetchAudio(getCardAudioUrl(c)));
+      }, 90);
+    }
+
+    function playAudio(rawUrl, onEnded) {
+      const url = normalizeAudioUrl(rawUrl);
       if (!url) return;
+      const seq = ++playRequestSeq;
       document.querySelectorAll('.example-play-btn.playing').forEach(b => b.classList.remove('playing'));
       audioPlayer.onended = null;
       audioPlayer.onerror = null;
+      try {
+        if (typeof audioPlayer.pause === 'function') audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+      } catch (e) {}
       if (typeof onEnded === 'function') {
         audioPlayer.onended = onEnded;
         audioPlayer.onerror = onEnded;
       }
+
+      const cached = AUDIO_BLOB_CACHE.get(url);
+      if (cached) {
+        AUDIO_BLOB_CACHE.delete(url);
+        AUDIO_BLOB_CACHE.set(url, cached);
+        audioPlayer.src = cached;
+        const p = audioPlayer.play();
+        if (p && typeof p.catch === 'function') p.catch(() => { if (typeof onEnded === 'function') onEnded(); });
+        return;
+      }
+
+      if (AUDIO_INFLIGHT.has(url)) {
+        AUDIO_INFLIGHT.get(url).then(blobUrl => {
+          if (seq !== playRequestSeq) return;
+          audioPlayer.src = blobUrl || url;
+          const p = audioPlayer.play();
+          if (p && typeof p.catch === 'function') p.catch(() => { if (typeof onEnded === 'function') onEnded(); });
+        });
+        return;
+      }
+
       audioPlayer.src = url;
-      audioPlayer.play().catch(e => {
-        if (typeof onEnded === 'function') onEnded();
-      });
+      const p = audioPlayer.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { if (typeof onEnded === 'function') onEnded(); });
     }
 
     // ==========================================
@@ -3321,11 +3537,16 @@ export default {
       }
 
       saveDeck();
+
+      queuedNextCard = getWeightedNextCard();
+      if (queuedNextCard && reviewMode === 'quiz') {
+        prefetchAudio(getCardAudioUrl(queuedNextCard));
+      }
     }
 
     function advanceQuizNext() {
       clearQuizAutoNextTimer();
-      loadNextReviewCard();
+      loadNextReviewCard({ autoPlayQuiz: true });
     }
 
     function renderQuizDefsForReview(card) {
@@ -3388,6 +3609,7 @@ export default {
 
     function renderQuizUI() {
       if (!currentCard) return;
+      if (quizAutoPlayChk) quizAutoPlayChk.checked = quizAutoPlay;
       quizAutoNextChk.checked = quizAutoNext;
       quizOptionsGrid.innerHTML = '';
 
@@ -3514,6 +3736,7 @@ export default {
         return;
       }
       clearQuizAutoNextTimer();
+      queuedNextCard = null;
       reviewMode = target;
       try { localStorage.setItem(REVIEW_MODE_STORAGE, reviewMode); } catch (e) {}
       updateModeSwitchUI();
@@ -3526,11 +3749,25 @@ export default {
           quizActiveWord = null;
         }
         renderCardState();
+        if (reviewMode === 'quiz') {
+          if (quizAutoPlay) playAudio(getCardAudioUrl(currentCard));
+          prefetchUpcomingQuizAudio(currentCard);
+        }
       }
     }
 
     modeFlipBtn.addEventListener('click', () => setReviewMode('flip'));
     modeQuizBtn.addEventListener('click', () => setReviewMode('quiz'));
+
+    if (quizAutoPlayChk) {
+      quizAutoPlayChk.addEventListener('change', () => {
+        quizAutoPlay = !!quizAutoPlayChk.checked;
+        try { localStorage.setItem(QUIZ_AUTOPLAY_STORAGE, String(quizAutoPlay)); } catch (e) {}
+        if (quizAutoPlay && reviewMode === 'quiz' && currentCard) {
+          prefetchUpcomingQuizAudio(currentCard);
+        }
+      });
+    }
 
     quizAutoNextChk.addEventListener('change', () => {
       quizAutoNext = !!quizAutoNextChk.checked;
@@ -3560,6 +3797,7 @@ export default {
 
       if (deck.length === 0) {
         clearQuizAutoNextTimer();
+        queuedNextCard = null;
         reviewEmptyState.style.display = 'block';
         reviewCard.style.display = 'none';
         currentCard = null;
@@ -3583,8 +3821,10 @@ export default {
       if (deck.length === 0) return null;
       if (deck.length === 1) return deck[0];
 
-      const candidates = deck.filter(c => !recentHistory.includes(c.word.toLowerCase()));
-      const pool = candidates.length > 0 ? candidates : deck;
+      const curWordLow = (currentCard && currentCard.word) ? currentCard.word.toLowerCase() : '';
+      const nonCurrent = deck.filter(c => c && c.word && c.word.toLowerCase() !== curWordLow);
+      const candidates = nonCurrent.filter(c => !recentHistory.includes(c.word.toLowerCase()));
+      const pool = candidates.length > 0 ? candidates : (nonCurrent.length > 0 ? nonCurrent : deck);
       const now = Date.now();
 
       const weights = pool.map(c => {
@@ -3606,13 +3846,22 @@ export default {
       return pool[0];
     }
 
-    function loadNextReviewCard() {
+    function loadNextReviewCard(opts) {
       clearQuizAutoNextTimer();
       if (deck.length === 0) {
+        queuedNextCard = null;
         updateDeckUI();
         return;
       }
-      currentCard = getWeightedNextCard();
+      let picked = null;
+      if (queuedNextCard && isWordInDeck(queuedNextCard.word)) {
+        const curLow = (currentCard && currentCard.word) ? currentCard.word.toLowerCase() : '';
+        if (deck.length === 1 || queuedNextCard.word.toLowerCase() !== curLow) {
+          picked = deck.find(c => c.word.toLowerCase() === queuedNextCard.word.toLowerCase()) || null;
+        }
+      }
+      queuedNextCard = null;
+      currentCard = picked || getWeightedNextCard();
       if (currentCard) {
         recentHistory.push(currentCard.word.toLowerCase());
         if (recentHistory.length > Math.min(5, Math.floor(deck.length / 2))) {
@@ -3629,6 +3878,12 @@ export default {
         lastQuizVerdict = null;
       }
       renderCardState();
+      if (reviewMode === 'quiz' && currentCard) {
+        if (opts && opts.autoPlayQuiz && quizAutoPlay) {
+          playAudio(getCardAudioUrl(currentCard));
+        }
+        prefetchUpcomingQuizAudio(currentCard);
+      }
     }
 
     function renderCardState() {
@@ -3739,7 +3994,7 @@ export default {
 
     reviewPlayBtn.addEventListener('click', () => {
       if (currentCard) {
-        playAudio(currentCard.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentCard.word)));
+        playAudio(getCardAudioUrl(currentCard));
       }
     });
 
@@ -3965,6 +4220,7 @@ export default {
         if (customMapDirty) saveCustomTranslations(customMap);
 
         deck = pulled;
+        queuedNextCard = null;
         quizActiveWord = null;
         quizAnswered = false;
         saveDeck();
@@ -4010,6 +4266,7 @@ export default {
         if (!pushRes.ok) throw new Error(pushData.error || '回寫雲端失敗');
 
         deck = merged;
+        queuedNextCard = null;
         quizActiveWord = null;
         quizAnswered = false;
         saveDeck();
@@ -4068,6 +4325,7 @@ export default {
         delBtn.onclick = () => {
           const idx = deck.findIndex(x => x.word.toLowerCase() === item.word.toLowerCase());
           if (idx >= 0) {
+            if (queuedNextCard && queuedNextCard.word.toLowerCase() === item.word.toLowerCase()) queuedNextCard = null;
             deck.splice(idx, 1);
             saveDeck();
             renderModalWordList();
@@ -4105,6 +4363,7 @@ export default {
           if (!Array.isArray(imported)) throw new Error('檔案格式錯誤');
           deck = mergeDecks(deck, imported);
           syncCustomMapFromDeck(deck);
+          queuedNextCard = null;
           quizActiveWord = null;
           quizAnswered = false;
           saveDeck();
@@ -4121,6 +4380,7 @@ export default {
 
     clearAllBtn.addEventListener('click', () => {
       if (confirm('確定要清空單字複習庫的所有單字嗎？此操作無法復原！')) {
+        queuedNextCard = null;
         deck = [];
         saveDeck();
         updateStarBtnState();
@@ -4165,7 +4425,7 @@ export default {
 
       if (e.key.toLowerCase() === 'r') {
         if (currentCard) {
-          playAudio(currentCard.audioUrl || ("/api/audio?word=" + encodeURIComponent(currentCard.word)));
+          playAudio(getCardAudioUrl(currentCard));
         }
         return;
       }
@@ -4199,6 +4459,9 @@ export default {
     updateDeckUI();
     initSyncKey();
     initHintState();
+    if (reviewMode === 'quiz' && currentCard) {
+      prefetchAudio(getCardAudioUrl(currentCard));
+    }
   </script>
 </body>
 </html>`;
