@@ -637,20 +637,104 @@ export default {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>美式單字即時發音 & 艾賓浩斯複習庫</title>
+  <script>try{var t=localStorage.getItem('deck_ui_theme_v1');if(t==='sage'||t==='mono'||t==='slate')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <style>
-    :root {
-      --bg: #0b1120;
-      --card-bg: #1e293b;
-      --panel-bg: #0f172a;
-      --border: #334155;
+    :root,
+    [data-theme="slate"] {
+      --bg: #090d16;
+      --panel-bg: #0d131f;
+      --card-bg: #141d2e;
+      --inset-bg: #0a101b;
+      --border: rgba(148, 163, 184, 0.16);
+      --border-subtle: rgba(148, 163, 184, 0.09);
+      --text: #edf2f7;
+      --text-secondary: #cbd5e1;
+      --text-muted: #8494a7;
+      --accent: #60a5fa;
+      --accent-hover: #3b82f6;
+      --accent-fg: #08101c;
+      --accent-soft: rgba(96, 165, 250, 0.11);
+      --accent-border: rgba(96, 165, 250, 0.36);
+      --star: #60a5fa;
+      --star-bg: rgba(96, 165, 250, 0.12);
+      --pos-bg: #141d2e;
+      --pos-border: rgba(148, 163, 184, 0.18);
+      --status-1: #d98282;
+      --status-1-bg: rgba(217, 130, 130, 0.09);
+      --status-1-border: rgba(217, 130, 130, 0.28);
+      --status-2: #d4b26a;
+      --status-2-bg: rgba(212, 178, 106, 0.09);
+      --status-2-border: rgba(212, 178, 106, 0.28);
+      --status-3: #6fc99e;
+      --status-3-bg: rgba(111, 201, 158, 0.09);
+      --status-3-border: rgba(111, 201, 158, 0.28);
+      --wrong: #df8484;
+      --wrong-bg: rgba(223, 132, 132, 0.10);
+      --wrong-border: rgba(223, 132, 132, 0.42);
+    }
+    [data-theme="sage"] {
+      --bg: #080f0d;
+      --panel-bg: #0c1412;
+      --card-bg: #13201c;
+      --inset-bg: #09110f;
+      --border: rgba(148, 179, 168, 0.16);
+      --border-subtle: rgba(148, 179, 168, 0.09);
+      --text: #edf5f2;
+      --text-secondary: #c5dad2;
+      --text-muted: #7f9c92;
+      --accent: #34d399;
+      --accent-hover: #10b981;
+      --accent-fg: #061410;
+      --accent-soft: rgba(52, 211, 153, 0.11);
+      --accent-border: rgba(52, 211, 153, 0.36);
+      --star: #34d399;
+      --star-bg: rgba(52, 211, 153, 0.12);
+      --pos-bg: #13201c;
+      --pos-border: rgba(148, 179, 168, 0.18);
+      --status-1: #db8982;
+      --status-1-bg: rgba(219, 137, 130, 0.09);
+      --status-1-border: rgba(219, 137, 130, 0.28);
+      --status-2: #c9bc75;
+      --status-2-bg: rgba(201, 188, 117, 0.09);
+      --status-2-border: rgba(201, 188, 117, 0.28);
+      --status-3: #5eead4;
+      --status-3-bg: rgba(94, 234, 212, 0.09);
+      --status-3-border: rgba(94, 234, 212, 0.28);
+      --wrong: #db8982;
+      --wrong-bg: rgba(219, 137, 132, 0.10);
+      --wrong-border: rgba(219, 137, 132, 0.42);
+    }
+    [data-theme="mono"] {
+      --bg: #07090d;
+      --panel-bg: #0b0e14;
+      --card-bg: #141923;
+      --inset-bg: #080a0f;
+      --border: rgba(226, 232, 240, 0.14);
+      --border-subtle: rgba(226, 232, 240, 0.08);
       --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #0284c7;
-      --gold: #f59e0b;
-      --gold-bg: rgba(245, 158, 11, 0.15);
-      --pos-bg: rgba(56, 189, 248, 0.12);
-      --pos-border: rgba(56, 189, 248, 0.3);
+      --text-secondary: #cbd5e1;
+      --text-muted: #7c8798;
+      --accent: #e2e8f0;
+      --accent-hover: #ffffff;
+      --accent-fg: #07090d;
+      --accent-soft: rgba(226, 232, 240, 0.10);
+      --accent-border: rgba(226, 232, 240, 0.36);
+      --star: #f8fafc;
+      --star-bg: rgba(248, 250, 252, 0.10);
+      --pos-bg: #141923;
+      --pos-border: rgba(226, 232, 240, 0.15);
+      --status-1: #94a3b8;
+      --status-1-bg: rgba(148, 163, 184, 0.08);
+      --status-1-border: rgba(148, 163, 184, 0.24);
+      --status-2: #cbd5e1;
+      --status-2-bg: rgba(203, 213, 225, 0.10);
+      --status-2-border: rgba(203, 213, 225, 0.28);
+      --status-3: #f8fafc;
+      --status-3-bg: rgba(248, 250, 252, 0.12);
+      --status-3-border: rgba(248, 250, 252, 0.36);
+      --wrong: #b88a8a;
+      --wrong-bg: rgba(184, 138, 138, 0.10);
+      --wrong-border: rgba(184, 138, 138, 0.38);
     }
     * {
       box-sizing: border-box;
@@ -667,65 +751,83 @@ export default {
       align-items: flex-start;
       min-height: 100vh;
       padding: 1.5rem 1rem;
+      transition: background-color 0.15s ease, color 0.15s ease;
     }
     .container {
       width: 100%;
-      max-width: 1060px;
+      max-width: 1040px;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.85rem;
+    }
+    .ic {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .ic svg {
+      display: block;
+      pointer-events: none;
     }
 
     /* 頂部手機切換 Tab (RWD) */
     .mobile-tabs {
       display: none;
-      gap: 8px;
+      gap: 6px;
       width: 100%;
     }
     .mobile-tab-btn {
       flex: 1;
       padding: 10px;
-      background: var(--card-bg);
+      background: var(--panel-bg);
       border: 1px solid var(--border);
       color: var(--text-muted);
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
     }
     .mobile-tab-btn.active {
-      background: var(--accent);
-      color: #0f172a;
-      border-color: var(--accent);
+      background: var(--card-bg);
+      color: var(--accent);
+      border-color: var(--accent-border);
     }
 
     /* 雙欄主架構 */
     .columns {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: 1.35rem;
       align-items: stretch;
     }
 
     .panel {
       background: var(--panel-bg);
       border: 1px solid var(--border);
-      padding: 1.5rem;
+      padding: 1.35rem 1.4rem;
       display: flex;
       flex-direction: column;
       min-height: 500px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
     .panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.9rem;
+      padding-bottom: 0.7rem;
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 8px;
     }
     .panel-title {
-      font-size: 1.1rem;
-      font-weight: 700;
+      font-size: 0.98rem;
+      font-weight: 600;
       color: var(--text);
       display: flex;
       align-items: center;
@@ -733,55 +835,59 @@ export default {
     }
     .badge {
       font-size: 0.72rem;
-      background: rgba(56, 189, 248, 0.15);
-      color: var(--accent);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 2px 7px;
+      background: var(--card-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      padding: 1px 7px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* 工具按鈕組 */
+    /* 靜默幽靈工具按鈕組 */
     .header-actions {
       display: flex;
-      gap: 6px;
+      align-items: center;
+      gap: 2px;
     }
     .tool-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      background: transparent;
+      border: 1px solid transparent;
       color: var(--text-muted);
       font-size: 0.75rem;
-      padding: 4px 8px;
+      padding: 4px 7px;
       cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
     }
     .tool-btn:hover {
       color: var(--text);
-      border-color: var(--accent);
-    }
-    .tool-btn.highlight {
-      border-color: rgba(56, 189, 248, 0.4);
-      color: var(--accent);
-      background: rgba(56, 189, 248, 0.08);
+      background: var(--card-bg);
+      border-color: var(--border);
     }
 
     /* 左側：查詢面板 */
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
-      padding: 11px 13px;
+      padding: 10px 12px;
       background: var(--card-bg);
       border: 1px solid var(--border);
       color: var(--text);
-      font-size: 1rem;
+      font-size: 0.96rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
     }
-    input[type="text"]:focus {
-      border-color: var(--accent);
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent-border);
     }
     .result-box {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      margin-top: 1.15rem;
-      padding: 1.5rem 1.35rem;
+      background: transparent;
+      border: none;
+      margin-top: 0.5rem;
+      padding: 1rem 0.15rem 0;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -794,32 +900,37 @@ export default {
       align-items: center;
       justify-content: center;
       gap: 10px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
-    .word { font-size: 1.85rem; font-weight: bold; color: var(--text); }
+    .word { font-size: 1.9rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
     .star-btn {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--text-muted);
-      font-size: 1.25rem;
       cursor: pointer;
-      padding: 0 6px;
-      line-height: 1.2;
-      transition: transform 0.15s ease, color 0.2s, border-color 0.2s;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, color 0.15s, border-color 0.15s, background-color 0.15s;
     }
-    .star-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .star-btn:hover { border-color: var(--accent-border); color: var(--star); }
     .star-btn.active {
-      color: var(--gold);
-      border-color: var(--gold);
-      background: var(--gold-bg);
+      color: var(--star);
+      border-color: var(--accent-border);
+      background: var(--star-bg);
+    }
+    .star-btn.active svg {
+      fill: currentColor;
     }
 
-    /* 主要釋義置中 + 詞性標籤固定左側排列 (支援點擊自選主要釋義) */
+    /* 主要釋義置中 + 詞性標籤固定左側排列 */
     .trans-section {
       width: 100%;
-      border-top: 1px dashed var(--border);
-      margin-top: 16px;
-      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 14px;
+      padding-top: 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -831,30 +942,39 @@ export default {
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
     .main-trans {
-      font-size: 1.35rem;
-      font-weight: bold;
+      font-size: 1.3rem;
+      font-weight: 700;
       color: var(--accent);
       text-align: center;
       line-height: 1.4;
     }
     .trans-action-btn {
       background: transparent;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       padding: 3px 7px;
       cursor: pointer;
       line-height: 1.2;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
     }
     .trans-action-btn:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.1);
+      color: var(--text);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+    }
+    .trans-action-btn svg.chevron-ic {
+      transition: transform 0.15s ease;
+    }
+    .trans-action-btn.expanded svg.chevron-ic {
+      transform: rotate(180deg);
     }
     .edit-trans-box {
       display: flex;
@@ -867,26 +987,29 @@ export default {
     }
     .edit-trans-input {
       flex: 1;
-      padding: 5px 10px;
+      padding: 5px 10px !important;
       background: var(--card-bg);
-      border: 1px solid var(--accent);
+      border: 1px solid var(--accent-border) !important;
       color: var(--text);
-      font-size: 0.92rem;
+      font-size: 0.9rem !important;
       font-weight: 600;
       outline: none;
       text-align: center;
     }
     .edit-trans-btn {
       border: 1px solid var(--border);
-      padding: 5px 10px;
+      padding: 5px 9px;
       font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.15s;
     }
     .edit-trans-btn.save {
       background: var(--accent);
-      color: #0f172a;
+      color: var(--accent-fg);
       border-color: var(--accent);
     }
     .edit-trans-btn.save:hover { background: var(--accent-hover); }
@@ -898,7 +1021,7 @@ export default {
     .def-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       align-items: stretch;
       text-align: left;
       font-size: 0.85rem;
@@ -908,17 +1031,17 @@ export default {
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: nowrap;
       width: 100%;
     }
     .pos-tag {
       background: var(--pos-bg);
-      color: var(--accent);
+      color: var(--text-muted);
       border: 1px solid var(--pos-border);
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      min-width: 58px;
+      font-size: 0.74rem;
+      padding: 3px 8px;
+      min-width: 56px;
       text-align: center;
       line-height: 1.35;
       font-weight: 600;
@@ -929,18 +1052,20 @@ export default {
       transition: all 0.15s ease;
     }
     .pos-tag:hover {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.22);
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
     .pos-tag.active {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
       font-weight: 700;
     }
     .meaning-wrap {
       display: flex;
       flex-wrap: wrap;
-      gap: 7px;
+      gap: 6px;
       align-items: center;
       justify-content: flex-start;
       flex: 1;
@@ -952,61 +1077,77 @@ export default {
       white-space: normal;
       text-align: left;
       font-size: 0.82rem;
-      color: #cbd5e1;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border);
-      padding: 4px 10px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      padding: 3px 9px;
       line-height: 1.35;
       cursor: pointer;
       user-select: none;
       transition: all 0.15s ease;
     }
     .meaning-pill:hover {
-      border-color: var(--accent);
+      border-color: var(--accent-border);
       color: var(--accent);
-      background: rgba(56, 189, 248, 0.12);
+      background: var(--accent-soft);
     }
     .meaning-pill.active {
-      border-color: var(--accent);
+      border-color: var(--accent-border);
       color: var(--accent);
-      background: rgba(56, 189, 248, 0.24);
+      background: var(--accent-soft);
       font-weight: 600;
     }
 
     .btn {
-      margin-top: 18px;
-      background: var(--accent);
-      color: #0f172a;
-      border: none;
-      padding: 9px 20px;
+      margin-top: 16px;
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.86rem;
       cursor: pointer;
       display: none;
-      transition: background 0.2s;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.15s ease;
     }
-    .btn:hover { background: var(--accent-hover); }
+    .btn:hover {
+      border-color: var(--accent-border);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .btn.primary-fill {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: var(--accent);
+    }
+    .btn.primary-fill:hover {
+      background: var(--accent-hover);
+      color: var(--accent-fg);
+    }
     .status { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
     .status.notice { color: var(--accent); }
-    .status.error { color: #f87171; }
+    .status.error { color: var(--wrong); }
 
-    /* 左側：精選雙語例句區塊 (風格 1：預設 2 句，僅左側顯示) */
+    /* 左側：精選雙語例句區塊 */
     .examples-section {
       width: 100%;
-      border-top: 1px dashed var(--border);
-      margin-top: 18px;
-      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 16px;
+      padding-top: 14px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
       text-align: left;
-      gap: 10px;
+      gap: 9px;
     }
     .examples-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
       color: var(--text-muted);
       letter-spacing: 0.03em;
@@ -1014,17 +1155,21 @@ export default {
     .example-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
     }
     .example-card {
-      background: rgba(30, 41, 59, 0.55);
-      border: 1px solid var(--border);
-      border-left: 2px solid var(--accent);
-      padding: 10px 12px;
+      background: var(--inset-bg);
+      border: 1px solid var(--border-subtle);
+      border-left: 2px solid var(--accent-border);
+      padding: 9px 11px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
+      transition: border-color 0.15s ease;
+    }
+    .example-card:hover {
+      border-left-color: var(--accent);
     }
     .example-en-row {
       display: flex;
@@ -1033,7 +1178,7 @@ export default {
       gap: 10px;
     }
     .example-en {
-      font-size: 0.88rem;
+      font-size: 0.87rem;
       line-height: 1.5;
       color: var(--text);
       flex: 1;
@@ -1041,97 +1186,94 @@ export default {
     }
     .ex-highlight {
       color: var(--accent);
-      background: rgba(56, 189, 248, 0.14);
+      background: var(--accent-soft);
       padding: 0 3px;
       font-weight: 600;
     }
     .example-zh {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       line-height: 1.48;
       color: var(--text-muted);
     }
     .example-play-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      background: transparent;
+      border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 0.72rem;
-      padding: 3px 7px;
+      padding: 4px 6px;
       cursor: pointer;
       flex-shrink: 0;
-      line-height: 1.3;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
     }
     .example-play-btn:hover,
     .example-play-btn.playing {
       color: var(--accent);
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.12);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
     .example-more-btn {
       width: 100%;
       background: transparent;
-      border: 1px dashed var(--border);
+      border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 0.76rem;
-      padding: 7px 10px;
+      font-size: 0.75rem;
+      padding: 6px 10px;
       cursor: pointer;
       text-align: center;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
     .example-more-btn:hover {
       color: var(--accent);
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.06);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
 
-    /* 右側：複習面板 (無音標，支援翻面與四選一模式切換) */
+    /* 右側：複習面板 (無外框雙層嵌套，底線式模式切換) */
     .review-mode-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
       width: 100%;
     }
     .mode-switch-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
       width: 100%;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
+      border-bottom: 1px solid var(--border-subtle);
+      background: transparent;
     }
     .mode-switch-btn {
       background: transparent;
       border: none;
-      border-right: 1px solid var(--border);
       color: var(--text-muted);
-      padding: 10px 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 8px 6px 9px;
+      font-size: 0.84rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
     }
-    .mode-switch-btn:last-child {
-      border-right: none;
-    }
     .mode-switch-btn:hover {
       color: var(--text);
-      background: rgba(56, 189, 248, 0.06);
     }
     .mode-switch-btn.active {
-      background: rgba(56, 189, 248, 0.16);
-      color: var(--accent);
+      color: var(--text);
       box-shadow: inset 0 -2px 0 var(--accent);
-      font-weight: 700;
+      font-weight: 600;
+    }
+    .mode-switch-btn.active .ic {
+      color: var(--accent);
     }
     .review-box {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      margin-top: 1.15rem;
-      padding: 1.5rem 1.35rem;
+      background: transparent;
+      border: none;
+      margin-top: 0.65rem;
+      padding: 0.5rem 0.15rem 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -1143,22 +1285,24 @@ export default {
       .columns { grid-template-columns: 1fr; }
       .mobile-tabs { display: flex; }
       .panel.mobile-hidden { display: none !important; }
-      .panel { padding: 1.1rem; }
-      .result-box, .review-box { padding: 1.15rem 1rem; }
+      .panel { padding: 1.05rem; }
       .def-row { gap: 8px; }
-      .pos-tag { min-width: 50px; padding: 4px 6px; }
-      .mode-switch-btn { font-size: 0.8rem; padding: 9px 6px; }
+      .pos-tag { min-width: 50px; padding: 3px 6px; }
+      .mode-switch-btn { font-size: 0.8rem; padding: 8px 4px; }
     }
     .empty-state {
       text-align: center;
       color: var(--text-muted);
       padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
-    .empty-title { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .empty-desc { font-size: 0.8rem; line-height: 1.5; }
+    .empty-icon { color: var(--text-muted); opacity: 0.45; margin-bottom: 0.75rem; }
+    .empty-title { font-size: 0.96rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .empty-desc { font-size: 0.8rem; line-height: 1.5; max-width: 280px; }
 
-    /* 複習卡片主體 (正面純淨無音標) */
+    /* 複習卡片主體 */
     .card-wrap {
       width: 100%;
       height: 100%;
@@ -1172,93 +1316,112 @@ export default {
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
+      align-items: center;
+      font-size: 0.74rem;
       color: var(--text-muted);
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
+      transition: opacity 0.2s ease;
+    }
+    .card-wrap.quiz-active:not(.quiz-answered) .card-meta {
+      opacity: 0.42;
     }
     .level-badge {
-      padding: 1px 6px;
+      padding: 2px 7px;
       font-weight: 600;
-      border: 1px solid var(--border);
+      font-size: 0.72rem;
+      border: 1px solid var(--border-subtle);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
-    .level-badge.lvl-1 { color: #f87171; border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
-    .level-badge.lvl-2 { color: #facc15; border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.1); }
-    .level-badge.lvl-3 { color: #4ade80; border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.1); }
+    .lvl-dot {
+      width: 6px;
+      height: 6px;
+      display: inline-block;
+      flex-shrink: 0;
+      background: currentColor;
+    }
+    .level-badge.lvl-1 { color: var(--status-1); border-color: var(--status-1-border); background: var(--status-1-bg); }
+    .level-badge.lvl-2 { color: var(--status-2); border-color: var(--status-2-border); background: var(--status-2-bg); }
+    .level-badge.lvl-3 { color: var(--status-3); border-color: var(--status-3-border); background: var(--status-3-bg); }
 
     .card-front {
-      margin: 1.5rem 0;
+      margin: 1.25rem 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .card-word {
-      font-size: 2.1rem;
+      font-size: 2.15rem;
       font-weight: 700;
       color: var(--text);
-      letter-spacing: -0.5px;
+      letter-spacing: -0.02em;
     }
     .card-audio-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: var(--accent);
-      padding: 6px 14px;
-      font-size: 0.85rem;
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
     }
-    .card-audio-btn:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+    .card-audio-btn:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-soft); }
 
     .flip-btn-wrap {
       width: 100%;
-      margin-top: 1rem;
+      margin-top: 0.75rem;
     }
     .flip-btn {
       width: 100%;
       background: var(--card-bg);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 11px;
-      font-size: 0.9rem;
+      padding: 10px;
+      font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
     .flip-btn:hover {
-      border-color: var(--accent);
+      border-color: var(--accent-border);
       color: var(--accent);
-      background: rgba(56, 189, 248, 0.05);
+      background: var(--accent-soft);
     }
 
-    /* 卡片背面 (翻面後呈現) */
+    /* 卡片背面 */
     .card-back {
       width: 100%;
       display: none;
       flex-direction: column;
       align-items: center;
       margin-top: 0.5rem;
-      animation: fadeIn 0.2s ease-in;
+      animation: fadeIn 0.18s ease-out;
     }
     .card-back.show {
       display: flex;
     }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
+      from { opacity: 0; transform: translateY(3px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .card-trans {
-      font-size: 1.3rem;
-      font-weight: bold;
+      font-size: 1.28rem;
+      font-weight: 700;
       color: var(--accent);
       text-align: center;
       line-height: 1.4;
     }
     .card-defs {
       width: 100%;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
-    /* 熟悉的評分按鈕 (1, 2, 3) */
+    /* 熟悉度評分按鈕 (低飽和穩定色彩) */
     .rate-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -1270,30 +1433,30 @@ export default {
       border: 1px solid var(--border);
       background: var(--card-bg);
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
-    .rate-btn.hard { color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
-    .rate-btn.hard:hover { background: rgba(239, 68, 68, 0.15); }
-    .rate-btn.med { color: #facc15; border-color: rgba(234, 179, 8, 0.3); }
-    .rate-btn.med:hover { background: rgba(234, 179, 8, 0.15); }
-    .rate-btn.easy { color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
-    .rate-btn.easy:hover { background: rgba(34, 197, 94, 0.15); }
+    .rate-btn.hard { color: var(--status-1); border-color: var(--status-1-border); }
+    .rate-btn.hard:hover { background: var(--status-1-bg); }
+    .rate-btn.med { color: var(--status-2); border-color: var(--status-2-border); }
+    .rate-btn.med:hover { background: var(--status-2-bg); }
+    .rate-btn.easy { color: var(--status-3); border-color: var(--status-3-border); }
+    .rate-btn.easy:hover { background: var(--status-3-bg); }
 
-    /* 模式 B：四選一測驗與艾賓浩斯記憶評估 UI */
+    /* 模式 B：四選一精簡測驗 UI */
     .card-wrap.quiz-active {
       justify-content: flex-start;
     }
     .card-wrap.quiz-active .card-front {
-      margin: 0.55rem 0 0.9rem;
+      margin: 0.4rem 0 0.85rem;
       gap: 8px;
     }
     .quiz-mode-body {
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 9px;
       margin-top: 2px;
       text-align: left;
     }
@@ -1303,10 +1466,10 @@ export default {
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
-      border-top: 1px dashed var(--border);
-      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 8px;
     }
     .quiz-toggles {
       display: inline-flex;
@@ -1321,6 +1484,7 @@ export default {
       cursor: pointer;
       user-select: none;
       color: var(--text-muted);
+      transition: color 0.15s;
     }
     .quiz-auto-label:hover {
       color: var(--text);
@@ -1329,11 +1493,13 @@ export default {
       accent-color: var(--accent);
       cursor: pointer;
       margin: 0;
+      width: 12px;
+      height: 12px;
     }
     .quiz-options {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 7px;
       width: 100%;
     }
     .quiz-option-btn {
@@ -1348,12 +1514,12 @@ export default {
       font-size: 0.9rem;
       text-align: left;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.15s, background-color 0.15s, opacity 0.15s;
       line-height: 1.4;
     }
     .quiz-option-btn:hover:not(:disabled) {
-      border-color: var(--accent);
-      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
     }
     .quiz-option-btn:disabled {
       cursor: default;
@@ -1362,14 +1528,14 @@ export default {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
+      width: 16px;
       flex-shrink: 0;
       font-family: monospace;
-      font-size: 0.78rem;
-      font-weight: 700;
-      background: #0f172a;
-      border: 1px solid var(--border);
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .quiz-option-btn:hover:not(:disabled) .quiz-opt-key {
       color: var(--accent);
     }
     .quiz-opt-text {
@@ -1378,53 +1544,57 @@ export default {
       word-break: break-word;
     }
     .quiz-opt-mark {
-      font-size: 0.85rem;
+      font-size: 0.84rem;
       font-weight: 700;
       flex-shrink: 0;
     }
     .quiz-option-btn.correct {
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.16);
-      color: #86efac;
+      border-color: var(--accent-border);
+      background: var(--accent-soft);
+      color: var(--text);
       font-weight: 600;
     }
-    .quiz-option-btn.correct .quiz-opt-key {
-      border-color: #22c55e;
-      background: rgba(34, 197, 94, 0.28);
-      color: #bbf7d0;
+    .quiz-option-btn.correct .quiz-opt-key,
+    .quiz-option-btn.correct .quiz-opt-mark {
+      color: var(--accent);
     }
     .quiz-option-btn.wrong {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.16);
-      color: #fca5a5;
+      border-color: var(--wrong-border);
+      background: var(--wrong-bg);
+      color: var(--wrong);
     }
-    .quiz-option-btn.wrong .quiz-opt-key {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.28);
-      color: #fecaca;
+    .quiz-option-btn.wrong .quiz-opt-key,
+    .quiz-option-btn.wrong .quiz-opt-mark {
+      color: var(--wrong);
     }
     .quiz-option-btn.dimmed {
-      opacity: 0.45;
+      opacity: 0.38;
     }
+
+    /* 作答回饋整合成單一俐落卡片 */
     .quiz-feedback-wrap {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
-      animation: fadeIn 0.2s ease-in;
+      animation: fadeIn 0.18s ease-out;
     }
-    .quiz-verdict-box {
-      padding: 11px 12px;
+    .quiz-feedback-card {
       background: var(--card-bg);
       border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .quiz-verdict-box {
+      padding: 10px 12px;
       border-left: 3px solid var(--accent);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
-    .quiz-verdict-box.verdict-1 { border-left-color: #ef4444; }
-    .quiz-verdict-box.verdict-2 { border-left-color: #eab308; }
-    .quiz-verdict-box.verdict-3 { border-left-color: #22c55e; }
+    .quiz-verdict-box.verdict-1 { border-left-color: var(--status-1); }
+    .quiz-verdict-box.verdict-2 { border-left-color: var(--status-2); }
+    .quiz-verdict-box.verdict-3 { border-left-color: var(--status-3); }
     .quiz-verdict-top {
       display: flex;
       justify-content: space-between;
@@ -1433,70 +1603,75 @@ export default {
       flex-wrap: wrap;
     }
     .quiz-verdict-title {
-      font-size: 0.84rem;
-      font-weight: 700;
+      font-size: 0.82rem;
+      font-weight: 600;
       color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .quiz-verdict-transition {
-      font-size: 0.76rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      border: 1px solid var(--border);
-      background: #0f172a;
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border: 1px solid var(--border-subtle);
+      background: var(--inset-bg);
       color: var(--accent);
     }
     .quiz-verdict-sub {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.48;
     }
     .quiz-override-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       margin-top: 2px;
       flex-wrap: wrap;
     }
     .quiz-override-label {
-      font-size: 0.72rem;
+      font-size: 0.71rem;
       color: var(--text-muted);
       margin-right: 2px;
     }
     .quiz-ov-btn {
-      background: #0f172a;
-      border: 1px solid var(--border);
+      background: transparent;
+      border: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 0.72rem;
-      padding: 3px 8px;
+      font-size: 0.71rem;
+      padding: 2px 7px;
       cursor: pointer;
-      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
     }
     .quiz-ov-btn:hover {
       color: var(--text);
-      border-color: var(--accent);
+      border-color: var(--border);
     }
     .quiz-ov-btn.active.lvl-1 {
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.5);
-      background: rgba(239, 68, 68, 0.15);
-      font-weight: 700;
+      color: var(--status-1);
+      border-color: var(--status-1-border);
+      background: var(--status-1-bg);
+      font-weight: 600;
     }
     .quiz-ov-btn.active.lvl-2 {
-      color: #facc15;
-      border-color: rgba(234, 179, 8, 0.5);
-      background: rgba(234, 179, 8, 0.15);
-      font-weight: 700;
+      color: var(--status-2);
+      border-color: var(--status-2-border);
+      background: var(--status-2-bg);
+      font-weight: 600;
     }
     .quiz-ov-btn.active.lvl-3 {
-      color: #4ade80;
-      border-color: rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.15);
-      font-weight: 700;
+      color: var(--status-3);
+      border-color: var(--status-3-border);
+      background: var(--status-3-bg);
+      font-weight: 600;
     }
     .quiz-main-trans-wrap {
-      padding: 9px 12px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-top: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -1517,12 +1692,12 @@ export default {
       flex: 1;
     }
     .quiz-main-label {
-      font-size: 0.74rem;
+      font-size: 0.73rem;
       color: var(--text-muted);
       white-space: nowrap;
     }
     .quiz-main-trans {
-      font-size: 0.94rem;
+      font-size: 0.92rem;
       font-weight: 700;
       color: var(--accent);
       word-break: break-word;
@@ -1530,15 +1705,15 @@ export default {
     .quiz-main-actions {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       flex-shrink: 0;
       flex-wrap: wrap;
     }
     .quiz-saved-badge {
-      font-size: 0.71rem;
-      color: #4ade80;
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.35);
+      font-size: 0.7rem;
+      color: var(--status-3);
+      background: var(--status-3-bg);
+      border: 1px solid var(--status-3-border);
       padding: 1px 6px;
       white-space: nowrap;
     }
@@ -1550,8 +1725,9 @@ export default {
       text-align: left;
     }
     .quiz-def-list {
-      border-top: 1px dashed var(--border);
-      padding-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+      padding: 10px 12px;
+      background: var(--inset-bg);
     }
     .quiz-def-list .pos-tag,
     .quiz-def-list .meaning-pill {
@@ -1560,34 +1736,38 @@ export default {
     .quiz-next-btn {
       width: 100%;
       background: var(--accent);
-      color: #0f172a;
+      color: var(--accent-fg);
       border: none;
       padding: 10px;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 700;
       cursor: pointer;
-      transition: opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.15s ease;
     }
     .quiz-next-btn:hover {
-      opacity: 0.9;
+      background: var(--accent-hover);
     }
 
-    /* 快捷鍵提示列（支援一鍵隱藏/展開） */
+    /* 底部快捷鍵提示列（預設極簡收合） */
     .hint-wrapper {
       width: 100%;
       display: flex;
       justify-content: center;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     .keyboard-hint {
       width: 100%;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--text-muted);
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 6px 10px;
-      background: var(--card-bg);
+      background: var(--panel-bg);
       border: 1px solid var(--border);
       line-height: 1.4;
     }
@@ -1596,7 +1776,7 @@ export default {
       text-align: center;
     }
     .keyboard-hint kbd {
-      background: #0f172a;
+      background: var(--inset-bg);
       border: 1px solid var(--border);
       padding: 1px 4px;
       color: var(--accent);
@@ -1604,39 +1784,45 @@ export default {
     }
     .hint-toggle-btn {
       background: transparent;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-subtle);
       color: var(--text-muted);
       font-size: 0.7rem;
       padding: 2px 6px;
       cursor: pointer;
       margin-left: 8px;
       white-space: nowrap;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
     }
     .hint-toggle-btn:hover {
       color: var(--text);
-      border-color: var(--accent);
+      border-color: var(--accent-border);
     }
     .hint-restore-btn {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px dashed var(--border);
+      background: transparent;
+      border: none;
       color: var(--text-muted);
       font-size: 0.72rem;
-      padding: 3px 10px;
+      padding: 3px 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      opacity: 0.65;
+      transition: opacity 0.15s, color 0.15s;
     }
     .hint-restore-btn:hover {
+      opacity: 1;
       color: var(--accent);
-      border-color: var(--accent);
-      background: var(--card-bg);
     }
 
     /* Modal 彈窗樣式 */
     .modal-backdrop {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.72);
       display: none;
       justify-content: center;
       align-items: center;
@@ -1649,76 +1835,222 @@ export default {
       border: 1px solid var(--border);
       width: 100%;
       max-width: 480px;
-      padding: 1.25rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      padding: 1.2rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
     }
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 9px;
       margin-bottom: 12px;
     }
-    .modal-title { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .modal-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
     .modal-close {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 1.2rem;
       cursor: pointer;
+      padding: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .modal-close:hover { color: var(--text); }
-    .modal-body { display: flex; flex-direction: column; gap: 10px; font-size: 0.85rem; }
+    .modal-body { display: flex; flex-direction: column; gap: 12px; font-size: 0.84rem; }
 
-    .sync-banner {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      padding: 8px 10px;
+    /* 設定彈窗：主題選擇器與開關 */
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .settings-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
+    }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .theme-grid { grid-template-columns: 1fr; }
+    }
+    .theme-opt {
+      background: var(--inset-bg);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 9px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 7px;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .theme-opt:hover {
+      border-color: var(--accent-border);
+      color: var(--text);
+    }
+    .theme-opt.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+    .theme-swatch {
+      display: flex;
+      width: 100%;
+      height: 10px;
+      border: 1px solid var(--border-subtle);
+      overflow: hidden;
+    }
+    .theme-swatch i {
+      display: block;
+      height: 100%;
+    }
+    .theme-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .theme-meta strong {
       font-size: 0.8rem;
       color: var(--text);
-      line-height: 1.45;
+    }
+    .theme-meta small {
+      font-size: 0.69rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+    .settings-toggles {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-subtle);
+      background: var(--inset-bg);
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row:hover { color: var(--text); }
+    .settings-row input {
+      accent-color: var(--accent);
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+
+    .sync-banner {
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
     }
     .sync-status-badge {
       display: inline-block;
-      font-size: 0.75rem;
+      font-size: 0.73rem;
       padding: 2px 6px;
       border: 1px solid var(--border);
       color: var(--text-muted);
     }
     .sync-status-badge.connected {
-      color: #34d399;
-      border-color: rgba(52, 211, 153, 0.3);
-      background: rgba(52, 211, 153, 0.08);
+      color: var(--status-3);
+      border-color: var(--status-3-border);
+      background: var(--status-3-bg);
     }
 
     .word-list-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 8px;
-      background: #0f172a;
-      border: 1px solid var(--border);
+      padding: 7px 9px;
+      background: var(--inset-bg);
+      border: 1px solid var(--border-subtle);
       margin-bottom: 4px;
-      font-size: 0.85rem;
+      font-size: 0.84rem;
     }
     .word-list-del {
       background: transparent;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      padding: 2px 6px;
+      border: 1px solid var(--wrong-border);
+      color: var(--wrong);
+      padding: 2px 7px;
       font-size: 0.72rem;
       cursor: pointer;
     }
-    .word-list-del:hover { background: rgba(239, 68, 68, 0.15); }
+    .word-list-del:hover { background: var(--wrong-bg); }
+    .modal-action-btn {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--inset-bg);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+    }
+    .modal-action-btn:hover {
+      border-color: var(--accent-border);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .modal-action-btn.primary {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: var(--accent);
+    }
+    .modal-action-btn.primary:hover {
+      background: var(--accent-hover);
+      color: var(--accent-fg);
+    }
+    .modal-action-btn.danger {
+      background: transparent;
+      border-color: var(--wrong-border);
+      color: var(--wrong);
+    }
+    .modal-action-btn.danger:hover {
+      background: var(--wrong-bg);
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- 手機版切換 Tab -->
     <div class="mobile-tabs">
-      <button id="tabLookupBtn" class="mobile-tab-btn active">🔍 單字查詢</button>
-      <button id="tabReviewBtn" class="mobile-tab-btn">📖 複習卡片 (<span id="tabBadge">0</span>)</button>
+      <button id="tabLookupBtn" class="mobile-tab-btn active">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <span>單字查詢</span>
+      </button>
+      <button id="tabReviewBtn" class="mobile-tab-btn">
+        <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><rect x="3" y="4" width="14" height="16"/><path d="M7 8h6"/><path d="M17 7h4v13H7"/></svg></span>
+        <span>複習卡片 (<span id="tabBadge">0</span>)</span>
+      </button>
     </div>
 
     <!-- 雙欄主容器 -->
@@ -1727,7 +2059,7 @@ export default {
       <div id="lookupPanel" class="panel">
         <div class="panel-header">
           <div class="panel-title">
-            <span>美式單字即時發音</span>
+            <span>單字查詢</span>
           </div>
         </div>
 
@@ -1738,25 +2070,38 @@ export default {
           
           <div id="wordHeader" class="word-header" style="display:none;">
             <div id="wordDisplay" class="word"></div>
-            <button id="starBtn" class="star-btn" title="加入單字複習庫">☆</button>
+            <button id="starBtn" class="star-btn" title="加入單字複習庫 (Alt)" aria-label="加入或移出複習庫">
+              <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+            </button>
           </div>
           
           <!-- 詞性與解釋置中區域 -->
           <div id="transSection" class="trans-section" style="display:none;">
             <div id="mainTransRow" class="main-trans-row">
               <span id="mainTrans" class="main-trans"></span>
-              <button id="editTransBtn" class="trans-action-btn" title="自訂主要釋義">✏️</button>
-              <button id="resetTransBtn" class="trans-action-btn" title="恢復辭典預設釋義" style="display:none;">↺</button>
+              <button id="editTransBtn" class="trans-action-btn" title="自訂主要釋義" aria-label="自訂主要釋義">
+                <span class="ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+              </button>
+              <button id="resetTransBtn" class="trans-action-btn" title="恢復辭典預設釋義" aria-label="恢復預設釋義" style="display:none;">
+                <span class="ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+              </button>
             </div>
             <div id="editTransBox" class="edit-trans-box" style="display:none;">
               <input type="text" id="editTransInput" class="edit-trans-input" placeholder="輸入自訂主要釋義...">
-              <button id="saveTransBtn" class="edit-trans-btn save">✓</button>
-              <button id="cancelTransBtn" class="edit-trans-btn cancel">✕</button>
+              <button id="saveTransBtn" class="edit-trans-btn save" title="儲存" aria-label="儲存">
+                <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+              <button id="cancelTransBtn" class="edit-trans-btn cancel" title="取消" aria-label="取消">
+                <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+              </button>
             </div>
             <div id="defList" class="def-list"></div>
           </div>
 
-          <button id="playBtn" class="btn">🔊 重新播放</button>
+          <button id="playBtn" class="btn">
+            <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></span>
+            <span>重新播放</span>
+          </button>
 
           <!-- 精選雙語例句區（僅左側顯示，預設 2 句） -->
           <div id="examplesSection" class="examples-section" style="display:none;">
@@ -1773,70 +2118,97 @@ export default {
       <div id="reviewPanel" class="panel mobile-hidden">
         <div class="panel-header">
           <div class="panel-title">
-            <span>單字複習庫</span>
+            <span>單字複習</span>
             <span id="deckCountBadge" class="badge">0 個</span>
           </div>
           <div class="header-actions">
-            <button id="syncDeckBtn" class="tool-btn highlight" title="個人專屬雲端同步">☁ 雲端同步</button>
-            <button id="manageDeckBtn" class="tool-btn" title="瀏覽複習庫清單">📋 清單</button>
-            <button id="backupDeckBtn" class="tool-btn" title="備份與匯出入">📥 備份</button>
+            <button id="syncDeckBtn" class="tool-btn" title="個人專屬雲端同步">
+              <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
+              <span>同步</span>
+            </button>
+            <button id="manageDeckBtn" class="tool-btn" title="瀏覽複習庫清單">
+              <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>
+              <span>清單</span>
+            </button>
+            <button id="backupDeckBtn" class="tool-btn" title="配色設定與本機備份">
+              <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
+              <span>設定</span>
+            </button>
           </div>
         </div>
 
-        <!-- 模式切換開關：翻面記憶 vs 四選一（英翻中） -->
+        <!-- 模式切換開關：極簡底線分頁 -->
         <div class="review-mode-bar" role="tablist" aria-label="複習模式切換">
           <div class="mode-switch-group">
-            <button id="modeFlipBtn" class="mode-switch-btn active" type="button" role="tab" aria-selected="true">🃏 翻面記憶</button>
-            <button id="modeQuizBtn" class="mode-switch-btn" type="button" role="tab" aria-selected="false">🎯 四選一（英翻中）</button>
+            <button id="modeFlipBtn" class="mode-switch-btn active" type="button" role="tab" aria-selected="true">
+              <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><rect x="3" y="5" width="14" height="15"/><path d="M7 2h14v15"/></svg></span>
+              <span>翻面記憶</span>
+            </button>
+            <button id="modeQuizBtn" class="mode-switch-btn" type="button" role="tab" aria-selected="false">
+              <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg></span>
+              <span>四選一（英翻中）</span>
+            </button>
           </div>
         </div>
 
         <div class="review-box">
           <!-- 空狀態 -->
           <div id="reviewEmptyState" class="empty-state">
-            <div class="empty-icon">🗂️</div>
+            <div class="empty-icon">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            </div>
             <div class="empty-title">複習庫空空如也</div>
-            <div class="empty-desc">在左側查詢單字後，點擊單字旁的【☆ 星號按鈕】即可加入複習庫。</div>
+            <div class="empty-desc">在左側查詢單字後，點擊星號或按 Alt 即可加入複習庫。</div>
           </div>
 
-          <!-- 卡片區域 (防猜答機制：正面僅顯示英文單字與發音按鈕，完全無音標) -->
+          <!-- 卡片區域 -->
           <div id="reviewCard" class="card-wrap" style="display:none;">
             <div class="card-meta">
-              <span id="cardLevelTag" class="level-badge lvl-1">🔴 生疏</span>
+              <span id="cardLevelTag" class="level-badge lvl-1">
+                <span class="lvl-dot"></span>
+                <span id="cardLevelText">生疏</span>
+              </span>
               <span id="cardStats">已複習 0 次</span>
             </div>
 
-            <!-- 卡片正面 (簡潔大字，無音標干擾) -->
+            <!-- 卡片正面 -->
             <div class="card-front">
               <div id="reviewWord" class="card-word">word</div>
-              <button id="reviewPlayBtn" class="card-audio-btn">🔊 聽發音 (R)</button>
+              <button id="reviewPlayBtn" class="card-audio-btn" title="聽發音 (R)">
+                <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+                <span>聽發音 (R)</span>
+              </button>
             </div>
 
             <!-- 模式 A：經典翻面記憶 -->
             <div id="flipModeBody" style="width:100%;">
-              <!-- 翻面按鈕 -->
               <div id="flipBtnWrap" class="flip-btn-wrap">
-                <button id="flipBtn" class="flip-btn">🔍 翻面核對 (Space)</button>
+                <button id="flipBtn" class="flip-btn">翻面核對 (Space)</button>
               </div>
 
-              <!-- 卡片背面 (點擊翻面後呈現，釋義置中) -->
               <div id="cardBack" class="card-back">
                 <div id="reviewMainTransRow" class="main-trans-row">
                   <span id="reviewMainTrans" class="card-trans">翻譯</span>
-                  <button id="reviewEditTransBtn" class="trans-action-btn" title="自訂此卡片主要釋義">✏️</button>
+                  <button id="reviewEditTransBtn" class="trans-action-btn" title="自訂此卡片主要釋義" aria-label="編輯釋義">
+                    <span class="ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+                  </button>
                 </div>
                 <div id="reviewEditTransBox" class="edit-trans-box" style="display:none;">
                   <input type="text" id="reviewEditTransInput" class="edit-trans-input" placeholder="輸入自訂釋義...">
-                  <button id="reviewSaveTransBtn" class="edit-trans-btn save">✓</button>
-                  <button id="reviewCancelTransBtn" class="edit-trans-btn cancel">✕</button>
+                  <button id="reviewSaveTransBtn" class="edit-trans-btn save" aria-label="儲存">
+                    <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><polyline points="20 6 9 17 4 12"/></svg></span>
+                  </button>
+                  <button id="reviewCancelTransBtn" class="edit-trans-btn cancel" aria-label="取消">
+                    <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                  </button>
                 </div>
                 <div id="reviewDefList" class="card-defs def-list"></div>
 
-                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; text-align:center;">請評估熟悉度：</div>
+                <div style="font-size:0.74rem; color:var(--text-muted); margin-bottom:6px; text-align:center;">請評估熟悉度</div>
                 <div class="rate-grid">
-                  <button id="rateHardBtn" class="rate-btn hard">1 生疏<br><span style="font-size:0.7rem;opacity:0.8;">頻繁複習</span></button>
-                  <button id="rateMedBtn" class="rate-btn med">2 模糊<br><span style="font-size:0.7rem;opacity:0.8;">偶爾複習</span></button>
-                  <button id="rateEasyBtn" class="rate-btn easy">3 精通<br><span style="font-size:0.7rem;opacity:0.8;">減少出現</span></button>
+                  <button id="rateHardBtn" class="rate-btn hard">1 生疏<br><span style="font-size:0.68rem;opacity:0.75;">頻繁複習</span></button>
+                  <button id="rateMedBtn" class="rate-btn med">2 模糊<br><span style="font-size:0.68rem;opacity:0.75;">偶爾複習</span></button>
+                  <button id="rateEasyBtn" class="rate-btn easy">3 精通<br><span style="font-size:0.68rem;opacity:0.75;">減少出現</span></button>
                 </div>
               </div>
             </div>
@@ -1844,15 +2216,15 @@ export default {
             <!-- 模式 B：四選一（英翻中）＋ 艾賓浩斯記憶評估 -->
             <div id="quizModeBody" class="quiz-mode-body" style="display:none;">
               <div class="quiz-subbar">
-                <span>選擇最貼切的中文釋義（鍵盤 <kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">1</kbd>-<kbd style="background:#0f172a;border:1px solid var(--border);padding:0 4px;color:var(--accent);">4</kbd>）</span>
+                <span>鍵盤 1–4 作答</span>
                 <div class="quiz-toggles">
                   <label class="quiz-auto-label" title="切換至下一個單字時自動播放發音">
                     <input type="checkbox" id="quizAutoPlayChk" checked>
-                    <span>🔊 換題自動發音</span>
+                    <span>自動發音</span>
                   </label>
                   <label class="quiz-auto-label" title="答對後約 1.6 秒自動切換下一題">
                     <input type="checkbox" id="quizAutoNextChk" checked>
-                    <span>⚡ 答對自動下一題</span>
+                    <span>自動跳題</span>
                   </label>
                 </div>
               </div>
@@ -1860,44 +2232,64 @@ export default {
               <div id="quizOptionsGrid" class="quiz-options"></div>
 
               <div id="quizFeedbackWrap" class="quiz-feedback-wrap" style="display:none;">
-                <div id="quizVerdictBox" class="quiz-verdict-box">
-                  <div class="quiz-verdict-top">
-                    <span id="quizVerdictTitle" class="quiz-verdict-title">🧠 艾賓浩斯記憶判讀</span>
-                    <span id="quizVerdictTransition" class="quiz-verdict-transition">生疏 ➔ 模糊</span>
-                  </div>
-                  <div id="quizVerdictSub" class="quiz-verdict-sub"></div>
-                  <div class="quiz-override-row">
-                    <span class="quiz-override-label">手動微調：</span>
-                    <button type="button" class="quiz-ov-btn lvl-1" data-lvl="1">🔴 生疏</button>
-                    <button type="button" class="quiz-ov-btn lvl-2" data-lvl="2">🟡 模糊</button>
-                    <button type="button" class="quiz-ov-btn lvl-3" data-lvl="3">🟢 精通</button>
-                  </div>
-                </div>
-
-                <!-- 主要解釋檢視與即時修改（會同步寫入複習庫、自訂釋義表與雲端同步資料） -->
-                <div id="quizMainTransWrap" class="quiz-main-trans-wrap">
-                  <div id="quizMainTransRow" class="quiz-main-trans-row">
-                    <div class="quiz-main-left">
-                      <span class="quiz-main-label">主要解釋：</span>
-                      <span id="quizMainTrans" class="quiz-main-trans">翻譯</span>
-                      <span id="quizTransSavedBadge" class="quiz-saved-badge" style="display:none;">✓ 已儲存</span>
+                <div class="quiz-feedback-card">
+                  <div id="quizVerdictBox" class="quiz-verdict-box">
+                    <div class="quiz-verdict-top">
+                      <span id="quizVerdictTitle" class="quiz-verdict-title">
+                        <span id="quizVerdictIcon" class="ic"></span>
+                        <span id="quizVerdictText">艾賓浩斯記憶判讀</span>
+                      </span>
+                      <span id="quizVerdictTransition" class="quiz-verdict-transition">生疏 → 模糊</span>
                     </div>
-                    <div class="quiz-main-actions">
-                      <button id="quizEditTransBtn" class="trans-action-btn" type="button" title="自訂此單字主要解釋">✏️ 編輯</button>
-                      <button id="quizResetTransBtn" class="trans-action-btn" type="button" style="display:none;" title="恢復詞典預設解釋">↺</button>
-                      <button id="quizToggleDefsBtn" class="trans-action-btn" type="button" style="display:none;" title="展開或收合全部釋義膠囊以供點選切換">▾ 換釋義</button>
+                    <div id="quizVerdictSub" class="quiz-verdict-sub"></div>
+                    <div class="quiz-override-row">
+                      <span class="quiz-override-label">調整熟練度</span>
+                      <button type="button" class="quiz-ov-btn lvl-1" data-lvl="1"><span class="lvl-dot"></span><span>生疏</span></button>
+                      <button type="button" class="quiz-ov-btn lvl-2" data-lvl="2"><span class="lvl-dot"></span><span>模糊</span></button>
+                      <button type="button" class="quiz-ov-btn lvl-3" data-lvl="3"><span class="lvl-dot"></span><span>精通</span></button>
                     </div>
                   </div>
-                  <div id="quizEditTransBox" class="edit-trans-box" style="display:none;">
-                    <input type="text" id="quizEditTransInput" class="edit-trans-input" placeholder="輸入自訂主要解釋...">
-                    <button id="quizSaveTransBtn" class="edit-trans-btn save" type="button">✓</button>
-                    <button id="quizCancelTransBtn" class="edit-trans-btn cancel" type="button">✕</button>
+
+                  <!-- 主要解釋檢視與即時修改（整合於單一回饋卡片中） -->
+                  <div id="quizMainTransWrap" class="quiz-main-trans-wrap">
+                    <div id="quizMainTransRow" class="quiz-main-trans-row">
+                      <div class="quiz-main-left">
+                        <span class="quiz-main-label">主要解釋</span>
+                        <span id="quizMainTrans" class="quiz-main-trans">翻譯</span>
+                        <span id="quizTransSavedBadge" class="quiz-saved-badge" style="display:none;">已儲存</span>
+                      </div>
+                      <div class="quiz-main-actions">
+                        <button id="quizEditTransBtn" class="trans-action-btn" type="button" title="自訂此單字主要解釋">
+                          <span class="ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+                          <span>編輯</span>
+                        </button>
+                        <button id="quizResetTransBtn" class="trans-action-btn" type="button" style="display:none;" title="恢復詞典預設解釋" aria-label="恢復預設解釋">
+                          <span class="ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+                        </button>
+                        <button id="quizToggleDefsBtn" class="trans-action-btn" type="button" style="display:none;" title="展開或收合全部釋義膠囊以供點選切換">
+                          <span class="ic"><svg class="chevron-ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><polyline points="6 9 12 15 18 9"/></svg></span>
+                          <span id="quizToggleDefsLabel">換釋義</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div id="quizEditTransBox" class="edit-trans-box" style="display:none;">
+                      <input type="text" id="quizEditTransInput" class="edit-trans-input" placeholder="輸入自訂主要解釋...">
+                      <button id="quizSaveTransBtn" class="edit-trans-btn save" type="button" aria-label="儲存">
+                        <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><polyline points="20 6 9 17 4 12"/></svg></span>
+                      </button>
+                      <button id="quizCancelTransBtn" class="edit-trans-btn cancel" type="button" aria-label="取消">
+                        <span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                      </button>
+                    </div>
                   </div>
+
+                  <div id="quizDefList" class="quiz-def-list def-list" style="display:none;"></div>
                 </div>
 
-                <div id="quizDefList" class="quiz-def-list def-list" style="display:none;"></div>
-
-                <button id="quizNextBtn" class="quiz-next-btn" type="button">下一題 ➔ (Space / Enter)</button>
+                <button id="quizNextBtn" class="quiz-next-btn" type="button">
+                  <span id="quizNextLabel">下一題 (Space / Enter)</span>
+                  <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+                </button>
               </div>
             </div>
           </div>
@@ -1905,30 +2297,39 @@ export default {
       </div>
     </div>
 
-    <!-- 底部快捷鍵提示列（支援可隱藏/展開） -->
+    <!-- 底部快捷鍵提示列（預設極簡收合） -->
     <div class="hint-wrapper">
-      <div id="hintBar" class="keyboard-hint">
+      <div id="hintBar" class="keyboard-hint" style="display:none;">
         <div class="hint-text">
-          ⚡ 快捷鍵：<kbd>Tab</kbd> 定位查詢 ｜ <kbd>Enter</kbd> 查詢/發音 ｜ <kbd>Alt</kbd> 收藏 ｜ <kbd>ddd</kbd> 清空 ｜ <kbd>Space</kbd> 翻面/下一題 ｜ <kbd>1</kbd>-<kbd>4</kbd> 作答/評分 ｜ <kbd>R</kbd> 聽發音
+          快捷鍵：<kbd>Tab</kbd> 查詢 ｜ <kbd>Enter</kbd> 送出 ｜ <kbd>Alt</kbd> 收藏 ｜ <kbd>ddd</kbd> 清空 ｜ <kbd>Space</kbd> 翻面/下一題 ｜ <kbd>1</kbd>-<kbd>4</kbd> 作答 ｜ <kbd>R</kbd> 聽發音
         </div>
-        <button id="hideHintBtn" class="hint-toggle-btn" title="隱藏此快捷鍵提示">✕ 隱藏</button>
+        <button id="hideHintBtn" class="hint-toggle-btn" title="收合快捷鍵提示">
+          <span class="ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+          <span>收合</span>
+        </button>
       </div>
-      <button id="showHintBtn" class="hint-restore-btn" style="display:none;" title="展開快捷鍵提示">
-        ⌨ 顯示快捷鍵提示
+      <button id="showHintBtn" class="hint-restore-btn" title="查看快捷鍵說明">
+        <span class="ic"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <span>快捷鍵</span>
       </button>
     </div>
   </div>
 
-  <!-- 1. 個人雲端同步彈窗 (方案一專屬密碼 + 方案二鎖定單一槽位) -->
+  <!-- 1. 個人雲端同步彈窗 -->
   <div id="syncModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title">☁ 個人專屬雲端同步 (Cloudflare KV)</div>
-        <button id="closeSyncModalBtn" class="modal-close">✕</button>
+        <div class="modal-title">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
+          <span>個人專屬雲端同步 (Cloudflare KV)</span>
+        </div>
+        <button id="closeSyncModalBtn" class="modal-close" aria-label="關閉">
+          <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+        </button>
       </div>
       <div class="modal-body">
         <div class="sync-banner">
-          🔒 <strong>個人防護架構：</strong><br>
+          <strong>個人防護架構：</strong><br>
           • <strong>方案一（專屬密碼）</strong>：未授權請求在 1ms 攔截，0 消耗 KV 寫入額度。<br>
           • <strong>方案二（鎖定單槽位）</strong>：固定寫入 <code>MY_DECK</code>，永遠零殭屍資料。
         </div>
@@ -1937,23 +2338,28 @@ export default {
           <label style="display:block; margin-bottom:6px; font-weight:600;">專屬同步密碼 (SYNC_SECRET)：</label>
           <div style="display:flex; gap:6px;">
             <input type="password" id="syncKeyInput" placeholder="請輸入 Cloudflare 設定的密碼..." style="flex:1; padding:8px 10px; font-size:0.9rem;">
-            <button id="toggleSyncKeyVisBtn" class="tool-btn" style="padding:0 10px;">👁</button>
+            <button id="toggleSyncKeyVisBtn" class="tool-btn" style="padding:0 10px; border-color:var(--border);" aria-label="顯示或隱藏密碼">
+              <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            </button>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
             <span id="syncKeyStatus" class="sync-status-badge">未設定密碼</span>
             <span id="lastSyncTime" style="color:var(--text-muted); font-size:0.75rem;">上次同步: 從未</span>
           </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
-          <button id="syncMergeBtn" class="btn" style="display:block; width:100%; margin-top:0; background:var(--accent); color:#0f172a;">
-            🔄 智慧雙向合併 (Merge & Sync)
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+          <button id="syncMergeBtn" class="modal-action-btn primary">
+            <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="square"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+            <span>智慧雙向合併 (Merge &amp; Sync)</span>
           </button>
-          <button id="syncPushBtn" class="tool-btn" style="padding:8px; font-size:0.85rem;">
-            ☁ 上傳本地至雲端 (Push 覆蓋)
+          <button id="syncPushBtn" class="modal-action-btn">
+            <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            <span>上傳本地至雲端 (Push 覆蓋)</span>
           </button>
-          <button id="syncPullBtn" class="tool-btn" style="padding:8px; font-size:0.85rem;">
-            ⬇ 從雲端拉取至本地 (Pull 覆蓋)
+          <button id="syncPullBtn" class="modal-action-btn">
+            <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+            <span>從雲端拉取至本地 (Pull 覆蓋)</span>
           </button>
         </div>
 
@@ -1967,7 +2373,9 @@ export default {
     <div class="modal-card" style="max-height:80vh; display:flex; flex-direction:column;">
       <div class="modal-header">
         <div class="modal-title">單字複習庫清單 (<span id="modalTotalCount">0</span>)</div>
-        <button id="closeListModalBtn" class="modal-close">✕</button>
+        <button id="closeListModalBtn" class="modal-close" aria-label="關閉">
+          <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+        </button>
       </div>
       <div class="modal-body">
         <input type="text" id="modalSearchInput" placeholder="過濾單字..." style="padding:6px 10px; font-size:0.9rem;">
@@ -1976,22 +2384,76 @@ export default {
     </div>
   </div>
 
-  <!-- 3. 本地備份與匯出入彈窗 -->
+  <!-- 3. 偏好設定與本機備份彈窗 -->
   <div id="backupModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
-        <div class="modal-title">複習庫本機備份與還原</div>
-        <button id="closeBackupModalBtn" class="modal-close">✕</button>
+        <div class="modal-title">
+          <span class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
+          <span>設定與本機備份</span>
+        </div>
+        <button id="closeBackupModalBtn" class="modal-close" aria-label="關閉">
+          <span class="ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+        </button>
       </div>
       <div class="modal-body">
-        <div style="line-height:1.5; color:var(--text-muted);">
-          進度預設存於瀏覽器 localStorage。建議定期匯出備份 JSON 檔案。
+        <!-- 主題切換 -->
+        <div class="settings-section">
+          <div class="settings-label">外觀配色風格</div>
+          <div class="theme-grid">
+            <button type="button" class="theme-opt active" data-theme-choice="slate">
+              <span class="theme-swatch"><i style="width:70%;background:#0d131f"></i><i style="width:30%;background:#60a5fa"></i></span>
+              <span class="theme-meta"><strong>沉穩霧藍</strong><small>預設 · 柔和降噪</small></span>
+            </button>
+            <button type="button" class="theme-opt" data-theme-choice="sage">
+              <span class="theme-swatch"><i style="width:70%;background:#0c1412"></i><i style="width:30%;background:#34d399"></i></span>
+              <span class="theme-meta"><strong>護眼墨綠</strong><small>舒緩青碧低疲勞</small></span>
+            </button>
+            <button type="button" class="theme-opt" data-theme-choice="mono">
+              <span class="theme-swatch"><i style="width:70%;background:#0b0e14"></i><i style="width:30%;background:#e2e8f0"></i></span>
+              <span class="theme-meta"><strong>純粹黑白</strong><small>極致 Focus 零彩色</small></span>
+            </button>
+          </div>
         </div>
-        <button id="exportBtn" class="btn" style="display:block; width:100%; margin-top:0;">📤 匯出單字庫 (JSON 檔案)</button>
-        <button id="importTriggerBtn" class="btn" style="display:block; width:100%; margin-top:0; background:#334155; color:var(--text);">📥 匯入單字庫 (合併至現有進度)</button>
-        <input type="file" id="importFileInput" accept=".json" style="display:none;">
-        <hr style="border:none; border-top:1px dashed var(--border); margin:4px 0;">
-        <button id="clearAllBtn" style="background:transparent; border:1px solid rgba(239, 68, 68, 0.4); color:#f87171; padding:8px; cursor:pointer; font-size:0.8rem;">⚠️ 清空複習庫所有單字</button>
+
+        <!-- 學習專注偏好 -->
+        <div class="settings-section">
+          <div class="settings-label">學習與操作偏好</div>
+          <div class="settings-toggles">
+            <label class="settings-row">
+              <span>四選一：切換下一題時自動發音</span>
+              <input type="checkbox" id="settingAutoPlayChk" checked>
+            </label>
+            <label class="settings-row">
+              <span>四選一：答對後自動跳下一題</span>
+              <input type="checkbox" id="settingAutoNextChk" checked>
+            </label>
+            <label class="settings-row">
+              <span>顯示底部快捷鍵提示列</span>
+              <input type="checkbox" id="settingShowHintChk">
+            </label>
+          </div>
+        </div>
+
+        <!-- 本機備份 -->
+        <div class="settings-section">
+          <div class="settings-label">本機資料備份</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button id="exportBtn" class="modal-action-btn">
+              <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+              <span>匯出單字庫 (JSON 檔案)</span>
+            </button>
+            <button id="importTriggerBtn" class="modal-action-btn">
+              <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+              <span>匯入單字庫 (合併至現有進度)</span>
+            </button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none;">
+            <button id="clearAllBtn" class="modal-action-btn danger">
+              <span class="ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+              <span>清空複習庫所有單字</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -2032,7 +2494,15 @@ export default {
     const REVIEW_MODE_STORAGE = 'deck_review_mode_v1';
     const QUIZ_AUTONEXT_STORAGE = 'deck_quiz_autonext_v1';
     const QUIZ_AUTOPLAY_STORAGE = 'deck_quiz_autoplay_v1';
+    const THEME_STORAGE_KEY = 'deck_ui_theme_v1';
     const DAY_MS = 86400000;
+
+    const UI_ICONS = {
+      speaker: '<span class="ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>',
+      check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><polyline points="20 6 9 17 4 12"/></svg>',
+      x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+      hand: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-5.9-2.7L3.3 15a2 2 0 0 1 2.8-2.8L8 14"/></svg>'
+    };
 
     const QUIZ_FALLBACK_DISTRACTORS = [
       '猶豫、遲疑',
@@ -2265,6 +2735,7 @@ export default {
     const reviewEmptyState = document.getElementById('reviewEmptyState');
     const reviewCard = document.getElementById('reviewCard');
     const cardLevelTag = document.getElementById('cardLevelTag');
+    const cardLevelText = document.getElementById('cardLevelText');
     const cardStats = document.getElementById('cardStats');
     const reviewWord = document.getElementById('reviewWord');
     const reviewPlayBtn = document.getElementById('reviewPlayBtn');
@@ -2289,6 +2760,8 @@ export default {
     const quizFeedbackWrap = document.getElementById('quizFeedbackWrap');
     const quizVerdictBox = document.getElementById('quizVerdictBox');
     const quizVerdictTitle = document.getElementById('quizVerdictTitle');
+    const quizVerdictIcon = document.getElementById('quizVerdictIcon');
+    const quizVerdictText = document.getElementById('quizVerdictText');
     const quizVerdictTransition = document.getElementById('quizVerdictTransition');
     const quizVerdictSub = document.getElementById('quizVerdictSub');
     const quizMainTransRow = document.getElementById('quizMainTransRow');
@@ -2297,12 +2770,14 @@ export default {
     const quizEditTransBtn = document.getElementById('quizEditTransBtn');
     const quizResetTransBtn = document.getElementById('quizResetTransBtn');
     const quizToggleDefsBtn = document.getElementById('quizToggleDefsBtn');
+    const quizToggleDefsLabel = document.getElementById('quizToggleDefsLabel');
     const quizEditTransBox = document.getElementById('quizEditTransBox');
     const quizEditTransInput = document.getElementById('quizEditTransInput');
     const quizSaveTransBtn = document.getElementById('quizSaveTransBtn');
     const quizCancelTransBtn = document.getElementById('quizCancelTransBtn');
     const quizDefList = document.getElementById('quizDefList');
     const quizNextBtn = document.getElementById('quizNextBtn');
+    const quizNextLabel = document.getElementById('quizNextLabel');
     const quizOvBtns = document.querySelectorAll('.quiz-ov-btn');
 
     // 提示列 DOM
@@ -2337,6 +2812,10 @@ export default {
     const importTriggerBtn = document.getElementById('importTriggerBtn');
     const importFileInput = document.getElementById('importFileInput');
     const clearAllBtn = document.getElementById('clearAllBtn');
+    const settingAutoPlayChk = document.getElementById('settingAutoPlayChk');
+    const settingAutoNextChk = document.getElementById('settingAutoNextChk');
+    const settingShowHintChk = document.getElementById('settingShowHintChk');
+    const themeOptBtns = document.querySelectorAll('.theme-opt');
 
     let audioPlayer = new Audio();
     const AUDIO_BLOB_CACHE = new Map();
@@ -2357,30 +2836,75 @@ export default {
     }
 
     // ==========================================
-    // 3. 快捷鍵提示列顯示/隱藏切換
+    // 3. 主題切換 & 快捷鍵提示列顯示/隱藏切換
     // ==========================================
-    function initHintState() {
-      const isHidden = localStorage.getItem(HINT_STORAGE_KEY) === 'true';
-      if (isHidden) {
-        hintBar.style.display = 'none';
-        showHintBtn.style.display = 'inline-block';
-      } else {
+    function applyTheme(theme) {
+      const valid = (theme === 'sage' || theme === 'mono' || theme === 'slate') ? theme : 'slate';
+      if (document.documentElement && document.documentElement.setAttribute) {
+        document.documentElement.setAttribute('data-theme', valid);
+      }
+      if (themeOptBtns && themeOptBtns.forEach) {
+        themeOptBtns.forEach(btn => {
+          btn.classList.toggle('active', Boolean(btn.dataset && btn.dataset.themeChoice === valid));
+        });
+      }
+      return valid;
+    }
+
+    function setTheme(theme) {
+      const valid = applyTheme(theme);
+      try { localStorage.setItem(THEME_STORAGE_KEY, valid); } catch (e) {}
+    }
+
+    function initThemeState() {
+      let saved = 'slate';
+      try { saved = localStorage.getItem(THEME_STORAGE_KEY) || 'slate'; } catch (e) {}
+      applyTheme(saved);
+    }
+
+    if (themeOptBtns && themeOptBtns.forEach) {
+      themeOptBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset && btn.dataset.themeChoice) {
+            setTheme(btn.dataset.themeChoice);
+          }
+        });
+      });
+    }
+
+    function applyHintVisible(shown) {
+      if (shown) {
         hintBar.style.display = 'flex';
         showHintBtn.style.display = 'none';
+      } else {
+        hintBar.style.display = 'none';
+        showHintBtn.style.display = 'inline-flex';
       }
+      if (settingShowHintChk) settingShowHintChk.checked = Boolean(shown);
+    }
+
+    function initHintState() {
+      const isShown = localStorage.getItem(HINT_STORAGE_KEY) === 'false';
+      applyHintVisible(isShown);
     }
 
     hideHintBtn.addEventListener('click', () => {
-      hintBar.style.display = 'none';
-      showHintBtn.style.display = 'inline-block';
-      localStorage.setItem(HINT_STORAGE_KEY, 'true');
+      applyHintVisible(false);
+      try { localStorage.setItem(HINT_STORAGE_KEY, 'true'); } catch (e) {}
     });
 
     showHintBtn.addEventListener('click', () => {
-      hintBar.style.display = 'flex';
-      showHintBtn.style.display = 'none';
-      localStorage.setItem(HINT_STORAGE_KEY, 'false');
+      applyHintVisible(true);
+      try { localStorage.setItem(HINT_STORAGE_KEY, 'false'); } catch (e) {}
     });
+
+    if (settingShowHintChk) {
+      settingShowHintChk.addEventListener('change', () => {
+        const shown = Boolean(settingShowHintChk.checked);
+        applyHintVisible(shown);
+        try { localStorage.setItem(HINT_STORAGE_KEY, shown ? 'false' : 'true'); } catch (e) {}
+      });
+    }
 
     // ==========================================
     // 4. 手機版面板切換 (RWD)
@@ -2405,17 +2929,15 @@ export default {
     function updateStarBtnState() {
       if (!currentSearchData) {
         starBtn.classList.remove('active');
-        starBtn.innerText = '☆';
+        starBtn.title = '加入單字複習庫';
         return;
       }
       const inDeck = isWordInDeck(currentSearchData.word);
       if (inDeck) {
         starBtn.classList.add('active');
-        starBtn.innerText = '★';
         starBtn.title = '已在複習庫中（點擊移出）';
       } else {
         starBtn.classList.remove('active');
-        starBtn.innerText = '☆';
         starBtn.title = '加入單字複習庫';
       }
     }
@@ -2516,7 +3038,7 @@ export default {
 
     function showQuizSavedBadge(text) {
       if (!quizTransSavedBadge) return;
-      quizTransSavedBadge.innerText = text || '✓ 已持久化儲存';
+      quizTransSavedBadge.innerText = text || '已儲存';
       quizTransSavedBadge.style.display = 'inline-block';
       if (quizSavedToastTimer) clearTimeout(quizSavedToastTimer);
       quizSavedToastTimer = setTimeout(() => {
@@ -2553,7 +3075,7 @@ export default {
         } else {
           currentSearchData.customTranslation = cleanTrans;
         }
-        resetTransBtn.style.display = (!isDefaultMatch && searchDefTrans && cleanTrans !== searchDefTrans) ? 'inline-block' : 'none';
+        resetTransBtn.style.display = (!isDefaultMatch && searchDefTrans && cleanTrans !== searchDefTrans) ? 'inline-flex' : 'none';
         updateDefPillsHighlight(cleanTrans, defList);
       }
 
@@ -2600,7 +3122,7 @@ export default {
       }
 
       if (options.showQuizToast) {
-        showQuizSavedBadge(options.isReset ? '已還原預設並儲存' : '✓ 已更新並持久化儲存');
+        showQuizSavedBadge(options.isReset ? '已還原預設' : '已更新並儲存');
       }
     }
 
@@ -2683,8 +3205,8 @@ export default {
 
     function pauseQuizAutoNext() {
       clearQuizAutoNextTimer();
-      if (quizAnswered && quizNextBtn) {
-        quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+      if (quizAnswered && quizNextLabel) {
+        quizNextLabel.innerText = '下一題 (Space / Enter)';
       }
     }
 
@@ -2842,7 +3364,8 @@ export default {
         const exPlayBtn = document.createElement('button');
         exPlayBtn.className = 'example-play-btn';
         exPlayBtn.title = '朗讀此例句';
-        exPlayBtn.innerText = '🔊';
+        exPlayBtn.setAttribute('aria-label', '朗讀此例句');
+        exPlayBtn.innerHTML = UI_ICONS.speaker;
         exPlayBtn.addEventListener('click', () => {
           document.querySelectorAll('.example-play-btn.playing').forEach(b => b.classList.remove('playing'));
           exPlayBtn.classList.add('playing');
@@ -2864,7 +3387,7 @@ export default {
       });
 
       if (currentExamples.length > 2) {
-        exampleMoreBtn.innerText = '▾ 展開更多例句 (共 ' + currentExamples.length + ' 句)';
+        exampleMoreBtn.innerText = '展開更多例句 (共 ' + currentExamples.length + ' 句)';
         exampleMoreBtn.style.display = 'block';
       } else {
         exampleMoreBtn.style.display = 'none';
@@ -2880,8 +3403,8 @@ export default {
         el.style.display = examplesExpanded ? 'flex' : 'none';
       });
       exampleMoreBtn.innerText = examplesExpanded
-        ? '▴ 收合多餘例句'
-        : ('▾ 展開更多例句 (共 ' + currentExamples.length + ' 句)');
+        ? '收合多餘例句'
+        : ('展開更多例句 (共 ' + currentExamples.length + ' 句)');
     });
 
     function clearInputField() {
@@ -2972,7 +3495,7 @@ export default {
           const chosen = custom || toTraditionalClient(data.translation || "釋義");
           mainTrans.innerText = chosen;
           if (custom && custom !== toTraditionalClient(data.translation || "")) {
-            resetTransBtn.style.display = "inline-block";
+            resetTransBtn.style.display = "inline-flex";
           } else {
             resetTransBtn.style.display = "none";
           }
@@ -3035,7 +3558,7 @@ export default {
         }
 
         status.style.display = "none";
-        playBtn.style.display = "inline-block";
+        playBtn.style.display = "inline-flex";
         renderExamples(data.examples, data.word || word);
 
         playAudio(data.audioUrl || ("/api/audio?word=" + encodeURIComponent((data.word || word).toLowerCase())));
@@ -3187,9 +3710,9 @@ export default {
     }
 
     function levelLabelText(lvl) {
-      if (lvl === 1) return '🔴 生疏';
-      if (lvl === 2) return '🟡 模糊';
-      return '🟢 精通';
+      if (lvl === 1) return '生疏';
+      if (lvl === 2) return '模糊';
+      return '精通';
     }
 
     function getCardMemoryMeta(card) {
@@ -3610,7 +4133,10 @@ export default {
     function renderQuizUI() {
       if (!currentCard) return;
       if (quizAutoPlayChk) quizAutoPlayChk.checked = quizAutoPlay;
-      quizAutoNextChk.checked = quizAutoNext;
+      if (settingAutoPlayChk) settingAutoPlayChk.checked = quizAutoPlay;
+      if (quizAutoNextChk) quizAutoNextChk.checked = quizAutoNext;
+      if (settingAutoNextChk) settingAutoNextChk.checked = quizAutoNext;
+      reviewCard.classList.toggle('quiz-answered', Boolean(quizAnswered && lastQuizVerdict));
       quizOptionsGrid.innerHTML = '';
 
       quizCurrentOptions.forEach((opt, idx) => {
@@ -3635,13 +4161,13 @@ export default {
             btn.classList.add('correct');
             const mk = document.createElement('span');
             mk.className = 'quiz-opt-mark';
-            mk.innerText = '✓';
+            mk.innerHTML = UI_ICONS.check;
             btn.appendChild(mk);
           } else if (idx === lastQuizChosenIdx) {
             btn.classList.add('wrong');
             const mk = document.createElement('span');
             mk.className = 'quiz-opt-mark';
-            mk.innerText = '✕';
+            mk.innerHTML = UI_ICONS.x;
             btn.appendChild(mk);
           } else {
             btn.classList.add('dimmed');
@@ -3658,15 +4184,17 @@ export default {
         quizVerdictBox.className = 'quiz-verdict-box verdict-' + v.newLevel;
 
         if (v.manualOverride) {
-          quizVerdictTitle.innerText = '✋ 手動調整熟悉度';
+          if (quizVerdictIcon) quizVerdictIcon.innerHTML = UI_ICONS.hand;
+          if (quizVerdictText) quizVerdictText.innerText = '手動調整熟悉度';
           quizVerdictTransition.innerText = levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays);
         } else {
-          quizVerdictTitle.innerText = v.isCorrect
-            ? ('✅ 答對！艾賓浩斯判讀（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）')
-            : ('❌ 答錯！艾賓浩斯重置（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）');
+          if (quizVerdictIcon) quizVerdictIcon.innerHTML = v.isCorrect ? UI_ICONS.check : UI_ICONS.x;
+          if (quizVerdictText) quizVerdictText.innerText = v.isCorrect
+            ? ('答對 · 艾賓浩斯判讀（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）')
+            : ('答錯 · 艾賓浩斯重置（' + v.secText + ' · 保留率 ' + v.retentionPct + '%）');
           quizVerdictTransition.innerText = (v.oldLevel === v.newLevel)
             ? ('維持 ' + levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays))
-            : (levelLabelText(v.oldLevel) + ' ➔ ' + levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays));
+            : (levelLabelText(v.oldLevel) + ' → ' + levelLabelText(v.newLevel) + ' · 下次 ' + formatIntervalZh(v.newIntervalDays));
         }
 
         quizVerdictSub.innerText = v.reason;
@@ -3682,16 +4210,18 @@ export default {
         if (quizMainTrans) quizMainTrans.innerText = curCleanTrans;
         const defTrans = getCardDefaultTranslation(currentCard);
         if (quizResetTransBtn) {
-          quizResetTransBtn.style.display = (defTrans && curCleanTrans !== defTrans) ? 'inline-block' : 'none';
+          quizResetTransBtn.style.display = (defTrans && curCleanTrans !== defTrans) ? 'inline-flex' : 'none';
         }
 
         const hasDefs = Array.isArray(currentCard.definitions) && currentCard.definitions.length > 0;
         if (quizToggleDefsBtn) {
           if (hasDefs) {
-            quizToggleDefsBtn.style.display = 'inline-block';
-            quizToggleDefsBtn.innerText = quizDefsExpanded ? '▴ 收合釋義' : '▾ 換釋義';
+            quizToggleDefsBtn.style.display = 'inline-flex';
+            quizToggleDefsBtn.classList.toggle('expanded', Boolean(quizDefsExpanded));
+            if (quizToggleDefsLabel) quizToggleDefsLabel.innerText = quizDefsExpanded ? '收合釋義' : '換釋義';
           } else {
             quizToggleDefsBtn.style.display = 'none';
+            quizToggleDefsBtn.classList.remove('expanded');
           }
         }
 
@@ -3701,10 +4231,10 @@ export default {
           quizDefList.style.display = 'none';
         }
 
-        if (v.isCorrect && quizAutoNext && quizAutoNextTimer && !v.manualOverride) {
-          quizNextBtn.innerText = '下一題 ➔ (1.6 秒後自動切換 · Space)';
-        } else {
-          quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+        if (quizNextLabel) {
+          quizNextLabel.innerText = (v.isCorrect && quizAutoNext && quizAutoNextTimer && !v.manualOverride)
+            ? '下一題 (1.6 秒後自動切換 · Space)'
+            : '下一題 (Space / Enter)';
         }
 
         quizFeedbackWrap.style.display = 'flex';
@@ -3759,26 +4289,46 @@ export default {
     modeFlipBtn.addEventListener('click', () => setReviewMode('flip'));
     modeQuizBtn.addEventListener('click', () => setReviewMode('quiz'));
 
-    if (quizAutoPlayChk) {
-      quizAutoPlayChk.addEventListener('change', () => {
-        quizAutoPlay = !!quizAutoPlayChk.checked;
-        try { localStorage.setItem(QUIZ_AUTOPLAY_STORAGE, String(quizAutoPlay)); } catch (e) {}
-        if (quizAutoPlay && reviewMode === 'quiz' && currentCard) {
-          prefetchUpcomingQuizAudio(currentCard);
-        }
-      });
+    function syncQuizPrefsUI() {
+      if (quizAutoPlayChk) quizAutoPlayChk.checked = quizAutoPlay;
+      if (settingAutoPlayChk) settingAutoPlayChk.checked = quizAutoPlay;
+      if (quizAutoNextChk) quizAutoNextChk.checked = quizAutoNext;
+      if (settingAutoNextChk) settingAutoNextChk.checked = quizAutoNext;
     }
 
-    quizAutoNextChk.addEventListener('change', () => {
-      quizAutoNext = !!quizAutoNextChk.checked;
+    function setQuizAutoPlay(enabled) {
+      quizAutoPlay = Boolean(enabled);
+      try { localStorage.setItem(QUIZ_AUTOPLAY_STORAGE, String(quizAutoPlay)); } catch (e) {}
+      syncQuizPrefsUI();
+      if (quizAutoPlay && reviewMode === 'quiz' && currentCard) {
+        prefetchUpcomingQuizAudio(currentCard);
+      }
+    }
+
+    function setQuizAutoNext(enabled) {
+      quizAutoNext = Boolean(enabled);
       try { localStorage.setItem(QUIZ_AUTONEXT_STORAGE, String(quizAutoNext)); } catch (e) {}
+      syncQuizPrefsUI();
       if (!quizAutoNext) {
         clearQuizAutoNextTimer();
-        if (quizAnswered && lastQuizVerdict) {
-          quizNextBtn.innerText = '下一題 ➔ (Space / Enter)';
+        if (quizAnswered && lastQuizVerdict && quizNextLabel) {
+          quizNextLabel.innerText = '下一題 (Space / Enter)';
         }
       }
-    });
+    }
+
+    if (quizAutoPlayChk) {
+      quizAutoPlayChk.addEventListener('change', () => setQuizAutoPlay(quizAutoPlayChk.checked));
+    }
+    if (settingAutoPlayChk) {
+      settingAutoPlayChk.addEventListener('change', () => setQuizAutoPlay(settingAutoPlayChk.checked));
+    }
+    if (quizAutoNextChk) {
+      quizAutoNextChk.addEventListener('change', () => setQuizAutoNext(quizAutoNextChk.checked));
+    }
+    if (settingAutoNextChk) {
+      settingAutoNextChk.addEventListener('change', () => setQuizAutoNext(settingAutoNextChk.checked));
+    }
 
     quizNextBtn.addEventListener('click', advanceQuizNext);
 
@@ -3900,7 +4450,7 @@ export default {
       }
 
       cardLevelTag.className = 'level-badge lvl-' + currentCard.level;
-      cardLevelTag.innerText = levelLabelText(currentCard.level);
+      if (cardLevelText) cardLevelText.innerText = levelLabelText(currentCard.level);
 
       reviewCard.classList.toggle('quiz-active', reviewMode === 'quiz');
 
@@ -3914,6 +4464,8 @@ export default {
         renderQuizUI();
         return;
       }
+
+      reviewCard.classList.remove('quiz-answered');
 
       flipModeBody.style.display = 'block';
       quizModeBody.style.display = 'none';
@@ -4051,7 +4603,7 @@ export default {
       const val = syncKeyInput.value.trim();
       if (val) {
         syncKeyStatus.className = 'sync-status-badge connected';
-        syncKeyStatus.innerText = '✓ 密鑰已保存';
+        syncKeyStatus.innerText = '密鑰已保存';
       } else {
         syncKeyStatus.className = 'sync-status-badge';
         syncKeyStatus.innerText = '未設定密碼';
@@ -4098,7 +4650,7 @@ export default {
       } else {
         delete currentSearchData.customTranslation;
       }
-      resetTransBtn.style.display = (searchDef && chosen !== searchDef) ? 'inline-block' : 'none';
+      resetTransBtn.style.display = (searchDef && chosen !== searchDef) ? 'inline-flex' : 'none';
       updateDefPillsHighlight(chosen, defList);
       updateStarBtnState();
     }
@@ -4179,11 +4731,11 @@ export default {
 
         localStorage.setItem(LAST_SYNC_STORAGE, Date.now().toString());
         lastSyncTime.innerText = '剛剛已上傳';
-        syncLog.style.color = '#34d399';
-        syncLog.innerText = '✅ 上傳成功！已同步 ' + data.count + ' 個單字';
+        syncLog.style.color = 'var(--status-3)';
+        syncLog.innerText = '上傳成功！已同步 ' + data.count + ' 個單字';
       } catch (err) {
-        syncLog.style.color = '#f87171';
-        syncLog.innerText = '❌ ' + err.message;
+        syncLog.style.color = 'var(--wrong)';
+        syncLog.innerText = '同步失敗：' + err.message;
       }
     }
 
@@ -4227,11 +4779,11 @@ export default {
         refreshLookupTranslationFromDeck();
         localStorage.setItem(LAST_SYNC_STORAGE, Date.now().toString());
         lastSyncTime.innerText = '剛剛已下載';
-        syncLog.style.color = '#34d399';
-        syncLog.innerText = '✅ 下載成功！已載入 ' + deck.length + ' 個單字';
+        syncLog.style.color = 'var(--status-3)';
+        syncLog.innerText = '下載成功！已載入 ' + deck.length + ' 個單字';
       } catch (err) {
-        syncLog.style.color = '#f87171';
-        syncLog.innerText = '❌ ' + err.message;
+        syncLog.style.color = 'var(--wrong)';
+        syncLog.innerText = '下載失敗：' + err.message;
       }
     }
 
@@ -4273,11 +4825,11 @@ export default {
         refreshLookupTranslationFromDeck();
         localStorage.setItem(LAST_SYNC_STORAGE, Date.now().toString());
         lastSyncTime.innerText = '剛剛已同步';
-        syncLog.style.color = '#34d399';
-        syncLog.innerText = '✅ 雙向合併成功！共 ' + deck.length + ' 個單字';
+        syncLog.style.color = 'var(--status-3)';
+        syncLog.innerText = '雙向合併成功！共 ' + deck.length + ' 個單字';
       } catch (err) {
-        syncLog.style.color = '#f87171';
-        syncLog.innerText = '❌ ' + err.message;
+        syncLog.style.color = 'var(--wrong)';
+        syncLog.innerText = '合併失敗：' + err.message;
       }
     }
 
@@ -4341,7 +4893,12 @@ export default {
 
     modalSearchInput.addEventListener('input', renderModalWordList);
 
-    backupDeckBtn.addEventListener('click', () => backupModal.classList.add('active'));
+    backupDeckBtn.addEventListener('click', () => {
+      initThemeState();
+      syncQuizPrefsUI();
+      initHintState();
+      backupModal.classList.add('active');
+    });
     closeBackupModalBtn.addEventListener('click', () => backupModal.classList.remove('active'));
 
     exportBtn.addEventListener('click', () => {
@@ -4455,6 +5012,8 @@ export default {
       }
     });
 
+    initThemeState();
+    syncQuizPrefsUI();
     updateModeSwitchUI();
     updateDeckUI();
     initSyncKey();
